@@ -307,13 +307,14 @@ function installClickCatcher() {
         setState(btn, { ok: false, error: "no_title" });
         return;
       }
+      btn.textContent = "⏳";
       handleSend(job, btn);
     },
     true
   );
 }
 
-/* ---------------------------------------------------- botão na página de detalhe */
+/* ------------------------------------------------- botão fixo "Enviar vaga atual" */
 function isDetailPage() {
   return (
     /\/jobs\/view\//.test(location.pathname) ||
@@ -321,35 +322,54 @@ function isDetailPage() {
   );
 }
 
-function placeDetailButton() {
-  if (!isDetailPage()) return;
-  if (document.getElementById("ve-detail")) return;
+/* Lê a vaga que está aberta: detalhes na tela (h1/empresa/local) ou o
+   primeiro card detectado. Não depende do layout exato dos cards. */
+function extractCurrentJob() {
+  const detail = extractDetail();
+  if (detail && detail.title) return detail;
+  for (const card of findCards()) {
+    const j = extractCard(card);
+    if (j && j.title) return j;
+  }
+  return null;
+}
 
+/* Botão fixo presente em QUALQUER página de jobs — caminho robusto de envio
+   que funciona mesmo quando os cards recusam a ler. */
+function placeActionButton() {
+  if (document.getElementById("ve-action")) return;
   const btn = document.createElement("button");
   btn.type = "button";
-  btn.id = "ve-detail";
-  btn.className = "ve-detail";
-  btn.textContent = "＋ Enviar pra vagas";
+  btn.id = "ve-action";
+  btn.className = "ve-action";
+  btn.textContent = "＋ Enviar vaga atual";
   btn.addEventListener("click", async () => {
-    const job = extractDetail();
-    if (!job || !job.title) {
-      toast("Não consegui ler a vaga desta página.");
-      setState(btn, { ok: false, error: "no_title" });
+    btn.dataset.busy = "1";
+    btn.textContent = "Enviando…";
+    const job = extractCurrentJob();
+    if (!job) {
+      toast("Não achei a vaga aberta — clique em um card ou recarregue.");
+      btn.dataset.busy = "";
+      btn.textContent = "＋ Enviar vaga atual";
       return;
     }
-    btn.textContent = "Enviando…";
+    console.log("[vagas-bridge] enviando:", job);
     const res = await sendMessage({ type: "SEND_JOB", job });
+    console.log("[vagas-bridge] resposta:", res);
+    btn.dataset.busy = "";
     if (res && res.ok) {
       btn.dataset.state = res.inserted ? "ok" : "dup";
-      btn.textContent = res.inserted ? "✓ Enviada" : "✓ Já existia";
+      btn.textContent = res.inserted ? "✓ Enviada pro painel" : "✓ Já existia no painel";
+      toast(res.inserted ? "Vaga enviada pro painel ✓" : "Vaga já existia no painel (dedup)");
     } else {
-      setState(btn, res);
-      btn.textContent = "✗ Falhou — ver opções";
+      btn.dataset.state = "err";
+      btn.textContent = "✗ Falhou";
+      toast(errorText(res));
     }
     setTimeout(() => {
       btn.dataset.state = "";
-      btn.textContent = "＋ Enviar pra vagas";
-    }, 4000);
+      btn.textContent = "＋ Enviar vaga atual";
+    }, 5000);
   });
   document.body.appendChild(btn);
 }
@@ -376,9 +396,9 @@ function placePill({ cards, detail }) {
   }
   let msg;
   if (detail) {
-    msg = "Página de vaga — botão “＋ Enviar pra vagas” no canto inferior direito";
+    msg = "Vaga aberta — use “＋ Enviar vaga atual” (canto inferior direito)";
   } else if (cards > 0) {
-    msg = `${cards} card(s) — clique em ﹢ para enviar pro painel`;
+    msg = `${cards} card(s) — clique em ﹢ ou em “＋ Enviar vaga atual”`;
   } else {
     msg = "Nenhum card detectado nesta página";
   }
@@ -553,7 +573,7 @@ function schedule() {
     loopTimer = null;
     const detail = isDetailPage();
     placeCardButtons();
-    placeDetailButton();
+    placeActionButton();
     placePill({ cards: findCards().length, detail });
     const modal = document.querySelector(
       "#jobs-easy-apply-modal, .jobs-easy-apply-modal, .jobs-easy-apply-form"

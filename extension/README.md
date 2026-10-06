@@ -13,9 +13,12 @@ sem reler nada que não seja a página de vagas que você já está vendo.
    painel via `POST /api/v1/jobs:bulk` (a origem fica `linkedin`). O botão
    mostra ✓ (enviada), ✓ âmbar (já existia — o dedup por título+empresa
    derruba duplicadas) ou ✗ (erro).
-2. **Página de detalhe da vaga:** botão flutuante **"＋ Enviar pra vagas"** no
-   canto inferior direito.
-3. **Easy Apply:** quando o modal de candidatura abre, a extensão preenche os
+2. **Caminho garantido em qualquer página de jobs:** o botão fixo **"＋ Enviar
+   vaga atual"** (canto inferior direito) lê a vaga que está aberta no painel
+   de detalhes — funciona mesmo se os cards mudarem de layout e os ﹢
+   sumirem. Prefira ele se alguma coisa falhar.
+3. **Página de detalhe da vaga:** o mesmo botão fixo continua disponível.
+4. **Easy Apply:** quando o modal de candidatura abre, a extensão preenche os
    campos com as respostas do seu modelo (em **Opções**). Campo de texto,
    seletor e Sim/Não. **O clique em "Enviar candidatura" é sempre seu.**
 
