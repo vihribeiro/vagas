@@ -56,7 +56,7 @@ Contrato: [`docs/SCORING.md`](docs/SCORING.md) · manual da muse.ai:
 Pré-requisito: [Docker](https://www.docker.com/) (com Compose).
 
 ```bash
-git clone <url-do-repositorio> vagas-app
+git clone https://github.com/vihribeiro/vagas.git vagas-app
 cd vagas-app
 
 # 1. crie o .env com valores seus
