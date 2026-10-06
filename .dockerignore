@@ -1,0 +1,17 @@
+# Dependências que não devem entrar na imagem do app.
+.venv
+career-ops
+data
+__pycache__
+*.pyc
+.git
+.openchamber
+docs
+scripts
+README.md
+.env
+.env.example
+docker-compose.yml
+Dockerfile
+.gitignore
+.DS_Store

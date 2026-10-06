@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1ec" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#17161b" media="(prefers-color-scheme: dark)">
+  <title>Vagas</title>
+  <link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/static/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <script src="/static/theme.js?v={{ asset_version }}"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Vagas</h1>
+    <div class="topbar-actions">
+      <a href="/curriculo" class="link">Currículo</a>
+      <button type="button" class="icon-btn" data-theme-toggle></button>
+      <a href="/logout" class="link">Sair</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="view-toggle" id="view-toggle" aria-label="Modo de visualização">
+      <button type="button" class="view-btn" data-view="swipe" aria-pressed="true">Deslizar</button>
+      <button type="button" class="view-btn" data-view="list" aria-pressed="false">Lista</button>
+    </nav>
+
+    <section class="controls" id="list-controls">
+      <div class="search" id="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>
+        </svg>
+        <label class="visually-hidden" for="f-q">Buscar vagas</label>
+        <input type="search" id="f-q" placeholder="Título, empresa ou local" autocomplete="off">
+        <button type="button" class="search-clear" id="f-q-clear" aria-label="Limpar busca">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="pill-row" id="source-row" hidden>
+        <span class="pill-row-label" aria-hidden="true">Origem</span>
+        <div class="scroller" id="source-pills" role="group" aria-label="Filtrar por origem"></div>
+      </div>
+    </section>
+
+    <nav class="status-tabs" id="status-tabs" aria-label="Filtrar por status"></nav>
+
+    <section id="list" class="job-list" aria-live="polite" aria-busy="true">
+      <p class="empty"><strong>Carregando</strong>Aguarde um instante.</p>
+    </section>
+
+    <!-- Modo deslizar: o baralho de vagas pendentes, uma por vez, com
+         deslize (ou botões / setas) para candidatar ou dispensar. -->
+    <section id="swipe" class="swipe" aria-live="polite" hidden>
+      <div class="swipe-deck" id="swipe-deck">
+        <p class="empty"><strong>Carregando</strong>Aguarde um instante.</p>
+      </div>
+      <p class="swipe-hint" id="swipe-hint" hidden>
+        Deslize para o lado (ou use ← para candidatar, → para dispensar)
+      </p>
+      <div class="swipe-actions">
+        <button type="button" class="btn swipe-btn swipe-dismiss" id="swipe-dismiss">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18"/>
+          </svg>
+          Dispensar
+        </button>
+        <button type="button" class="icon-btn swipe-undo" id="swipe-undo" aria-label="Desfazer" title="Desfazer" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>
+          </svg>
+        </button>
+        <button type="button" class="btn swipe-btn swipe-apply" id="swipe-apply">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.5"/>
+          </svg>
+          Candidatar
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/static/app.js?v={{ asset_version }}"></script>
+  <script src="/static/swipe.js?v={{ asset_version }}"></script>
+</body>
+</html>

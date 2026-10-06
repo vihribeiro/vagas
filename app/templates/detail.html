@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1ec" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#17161b" media="(prefers-color-scheme: dark)">
+  <title>{{ job.title }} — Vagas</title>
+  <link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/static/icon-192.png">
+  <script src="/static/theme.js?v={{ asset_version }}"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="link">Voltar</a>
+    <div class="topbar-actions">
+      <button type="button" class="icon-btn" data-theme-toggle></button>
+      <a href="/logout" class="link">Sair</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="detail-head">
+      <h2>{{ job.title }}</h2>
+      <p class="company">
+        {{ job.company }}{% if job.location %} · {{ job.location }}{% endif %}
+      </p>
+      <div class="tag-row">
+        <span class="badge source-{{ job.source or 'other' }}">{{ job.source or 'outro' }}</span>
+        <span class="pill status-{{ job.status }}">{{ job.status_label }}</span>
+        {% if job.score is not none %}
+        <span class="score" data-tier="{{ job.tier }}">{{ '%.1f'|format(job.score) }}</span>
+        {% endif %}
+        {% if job.email_date %}<span class="date">e-mail de {{ job.email_date }}</span>{% endif %}
+      </div>
+      {% if job.notes %}
+      <p class="detail-stack">{{ job.notes }}</p>
+      {% endif %}
+    </article>
+
+    {% if job.score is not none or job.recommendation %}
+    <section class="group eval-group">
+      <h3 class="section-title">Avaliação do agente</h3>
+      <div class="eval-head">
+        {% if job.score is not none %}
+        <span class="score" data-tier="{{ job.tier }}">{{ '%.1f'|format(job.score) }}</span>
+        {% endif %}
+        {% if job.recommendation %}
+        <span class="pill reco-{{ job.recommendation }}">{{ job.reco_label }}</span>
+        {% endif %}
+        {% if job.scored_by %}
+        <span class="date">por {{ job.scored_by }}</span>
+        {% endif %}
+      </div>
+      {% if job.reasons %}
+      <div class="eval-group-item">
+        <h4 class="eval-label">Motivos</h4>
+        <ul class="eval-list">
+          {% for reason in job.reasons %}<li>{{ reason }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      {% if job.tips %}
+      <div class="eval-group-item">
+        <h4 class="eval-label">Dicas</h4>
+        <ul class="eval-list">
+          {% for tip in job.tips %}<li>{{ tip }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="group">
+      <h3 class="section-title">Onde se candidatar</h3>
+      <div class="actions">
+        {% if job.source_url %}
+        <a href="{{ job.source_url }}" target="_blank" rel="noopener" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.5"/>
+          </svg>
+          Anúncio original
+        </a>
+        {% endif %}
+        <a class="btn" target="_blank" rel="noopener"
+           href="https://www.google.com/search?q={{ (job.title ~ ' ' ~ job.company ~ ' vaga') | urlencode }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>
+          </svg>
+          Buscar no Google
+        </a>
+      </div>
+
+    </section>
+
+    <section class="group">
+      <h3 class="section-title">Status</h3>
+      <div class="status-btns">
+        <button class="btn" data-status="pending" data-label="Pendente">Pendente</button>
+        <button class="btn" data-status="applied" data-label="Candidatado">Candidatei-me</button>
+        <button class="btn" data-status="rejected" data-label="Recusado">Recusar</button>
+        <button class="btn" data-status="dismissed" data-label="Dispensada">Dispensar</button>
+      </div>
+
+      <h3 class="section-title">Anotações</h3>
+      <label class="visually-hidden" for="notes">Anotações sobre a vaga</label>
+      <textarea id="notes" rows="4"
+                placeholder="Ex.: me candidatei pelo site da empresa em 04/10">{{ job.status_notes }}</textarea>
+      <button id="save-notes" class="btn primary block">Salvar anotações</button>
+      <p class="save-msg" id="save-msg" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script>
+    const JOB_ID = {{ job.id }};
+    const CURRENT_STATUS = "{{ job.status }}";
+  </script>
+  <script src="/static/detail.js?v={{ asset_version }}"></script>
+</body>
+</html>

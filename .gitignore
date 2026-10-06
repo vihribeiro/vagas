@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------- segredos
+# Nunca commite o .env — só o .env.example.
+.env
+
+# ---------------------------------------------------------------- dados locais
+# Banco SQLite local (fora do volume Docker) e dados pessoais de produtores.
+data/
+career-ops/
+
+# Currículos em PDF são dados pessoais.
+*.pdf
+
+# ---------------------------------------------------------------- python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# ---------------------------------------------------------------- ferramentas / SO
+.DS_Store
+.idea/
+.vscode/
+
+# Artefatos da ferramenta de teste (screenshots e afins).
+.openchamber/
