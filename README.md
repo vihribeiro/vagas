@@ -109,6 +109,7 @@ para ler o PDF do currículo).
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env    # gere valores reais (openssl rand -hex 32)
+# o app lê o .env da raiz automaticamente (fora do Docker)
 
 VAGAS_DATA_DIR=./data uvicorn app.main:app --reload
 ```

@@ -30,6 +30,7 @@ from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadF
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from dotenv import load_dotenv
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import cv_parser
@@ -39,6 +40,12 @@ from . import cv_parser
 CV_MAX_UPLOAD = 10 * 1024 * 1024
 
 BASE_DIR = Path(__file__).resolve().parent
+
+# Fora do Docker o app lê o .env da raiz do projeto (uvicorn direto). No
+# Docker o compose já injeta as variáveis, então aqui é no-op — e variáveis
+# reais de ambiente sempre vencem o arquivo.
+load_dotenv(BASE_DIR.parent / ".env")
+
 DATA_DIR = Path(os.environ.get("VAGAS_DATA_DIR", str(BASE_DIR.parent / "data")))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "vagas.db"
