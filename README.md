@@ -31,6 +31,9 @@ provedor configurado, o app já funciona sozinho — as vagas é que ficam sem n
 - **PWA:** instala como app no celular (requer HTTPS em produção).
 - **Dois idiomas:** interface em português (padrão) e inglês, com botão de
   troca no topo — a escolha fica salva e navegador em inglês cai direto no EN.
+- **Extensão do Chrome ([`extension/`](extension/README.md)):** enquanto
+  navega no LinkedIn, um botão ﹢ em cada card manda a vaga direto pro painel
+  (e preenche o formulário de candidatura para revisar antes de enviar).
 
 ## Como funciona
 

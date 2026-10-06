@@ -29,6 +29,10 @@ works on its own — jobs just arrive without a score.
 - **Job detail** with the agent evaluation: 0–5 score, recommendation
   (Apply / Consider / Avoid), **reasons** and **tips** — plus your own notes.
 - **PWA:** installs as an app on your phone (requires HTTPS in production).
+- **Chrome extension ([`extension/`](extension/README.md)):** while browsing
+  LinkedIn, a **+** button on each job card sends the job straight to the
+  dashboard (and pre-fills the application form for you to review before
+  submitting).
 
 ## How it works
 
