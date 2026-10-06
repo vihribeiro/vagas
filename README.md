@@ -180,6 +180,7 @@ requirements.txt   # dependências fixadas
 - [docs/API.md](docs/API.md) — endpoints, payloads, dedup, filtros.
 - [docs/SCORING.md](docs/SCORING.md) — contrato de avaliação (qualquer provedor).
 - [docs/MUSE_AI.md](docs/MUSE_AI.md) — manual de configuração da muse.ai.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — como rodar, testar e enviar mudanças.
 
 ## Licença
 
