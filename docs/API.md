@@ -22,6 +22,7 @@ parte do app — entra pelo contrato descrito em
 | `POST` | `/api/v1/cv:import` | sessão | PDF → módulos (não salva) |
 | `GET` | `/api/v1/jobs` | sessão | Listar (o painel) |
 | `PATCH` | `/api/v1/jobs/{id}/status` | sessão | Marcar status/anotação |
+| `DELETE` | `/api/v1/jobs/{id}` | sessão | Excluir a vaga (e a avaliação dela) |
 
 Sobre o `:` no caminho: é literal. `jobs:bulk`, `jobs:for-scoring` e
 `jobs:score` não têm `/` — service worker ou proxy que normalize `:` para `/`

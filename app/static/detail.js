@@ -71,4 +71,16 @@ notesEl.addEventListener("keydown", (e) => {
   }
 });
 
+document.getElementById("delete-job").addEventListener("click", async () => {
+  if (!confirm(I18N.t("job_delete_confirm"))) return;
+  try {
+    const res = await fetch(`/api/v1/jobs/${JOB_ID}`, { method: "DELETE" });
+    if (res.status === 401) { location.href = "/login"; return; }
+    if (!res.ok) { showMsg(I18N.t("job_delete_fail"), false); return; }
+    location.href = "/";
+  } catch (err) {
+    showMsg(I18N.t("job_delete_fail"), false);
+  }
+});
+
 markActive(CURRENT_STATUS);

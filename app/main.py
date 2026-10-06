@@ -84,7 +84,7 @@ def reco_for(score: float | None) -> str:
 # mudarem: sem isso o Cache Storage do service worker pode entregar a versão
 # anterior do arquivo mesmo após o deploy. O mesmo valor aparece no SHELL do
 # app/static/sw.js — os dois precisam andar juntos.
-ASSET_VERSION = "25"
+ASSET_VERSION = "26"
 
 
 def now_iso() -> str:
@@ -904,3 +904,18 @@ async def api_set_status(job_id: int, request: Request):
             (job_id, status, notes, now_iso()),
         )
     return {"ok": True, "status": status}
+
+
+@app.delete("/api/v1/jobs/{job_id}")
+def api_delete_job(job_id: int, request: Request):
+    """Remove a vaga do banco. `job_status` e `job_evals` caem junto
+    (ON DELETE CASCADE). Sessão do painel, como os outros endpoints da UI."""
+    require_login(request)
+    with get_db() as conn:
+        exists = conn.execute(
+            "SELECT id FROM jobs WHERE id = ?", (job_id,)
+        ).fetchone()
+        if exists is None:
+            raise HTTPException(status_code=404, detail="vaga não encontrada")
+        conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+    return {"ok": True, "deleted": job_id}

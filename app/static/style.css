@@ -514,6 +514,43 @@ a { color: var(--accent); }
   transition: transform .15s ease, box-shadow .15s ease;
 }
 
+/* wrapper que segura o botão de excluir no canto — fica fora do <a>, porque
+   elemento interativo não pode aninhar outro interativo. */
+.job-card { position: relative; }
+
+.job-del {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--on-tone);
+  opacity: .55;
+  cursor: pointer;
+  z-index: 1;
+}
+.job-del:hover,
+.job-del:focus-visible {
+  opacity: 1;
+  background: color-mix(in srgb, var(--on-tone) 10%, transparent);
+}
+.job-del > svg { width: 16px; height: 16px; display: block; }
+
+@media (hover: hover) {
+  /* no desktop o lixo só aparece sobre o card (ou no foco de teclado) */
+  .job-del { opacity: 0; }
+  .job-card:hover .job-del,
+  .job-del:focus-visible { opacity: .75; }
+  .job-card:hover .job-del:hover,
+  .job-del:focus-visible { opacity: 1; }
+}
+
 /* --tone é o pastel cheio; --surf é o que aparece. Para quem já tem decisão
    tomada, --surf é o pastel lavado em direção ao fundo e a sombra some —
    sobra cor de verdade só para o que ainda exige ação. */
@@ -944,6 +981,19 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   background: transparent;
   color: var(--text-soft);
   font-weight: 550;
+}
+
+/* destrutivo: usa a mesma tinta de erro em vez de um vermelho berrante */
+.btn.danger {
+  color: var(--err-text);
+  border-color: color-mix(in srgb, var(--err-text) 35%, var(--bg-sunk));
+}
+
+@media (hover: hover) {
+  .btn.danger:hover {
+    border-color: var(--err-text);
+    background: color-mix(in srgb, var(--err-text) 8%, transparent);
+  }
 }
 
 /* ---------------------------------------------------------------- barra de ferramentas */

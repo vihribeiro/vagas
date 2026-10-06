@@ -77,6 +77,7 @@
             ? `<a class="btn" href="${esc(j.source_url)}" target="_blank" rel="noopener">${I18N.t("swipe_original")}</a>`
             : ""}
           <a class="btn quiet" href="/vagas/${j.id}">${I18N.t("swipe_detail")}</a>
+          <button type="button" class="btn danger" data-job-del="${j.id}">${I18N.t("job_delete_btn")}</button>
         </footer>
       </article>`;
   }
@@ -113,6 +114,8 @@
     if (!card) return;
     card.addEventListener("pointerdown", (e) => {
       if (busy) return;
+      // botões e links do card não devem iniciar o gesto de deslizar
+      if (e.target.closest("a, button")) return;
       card.setPointerCapture(e.pointerId);
       drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, dx: 0, dy: 0 };
     });
@@ -165,6 +168,28 @@
     history.push({ job, status });
     renderDeck();
     busy = false;
+  }
+
+  /* ---------------------------------------------------------------- exclusão */
+  deckEl.addEventListener("click", (e) => {
+    const del = e.target.closest("[data-job-del]");
+    if (!del) return;
+    deleteFromDeck(Number(del.dataset.jobDel));
+  });
+
+  async function deleteFromDeck(id) {
+    if (!confirm(I18N.t("job_delete_confirm"))) return;
+    try {
+      const res = await fetch(`/api/v1/jobs/${id}`, { method: "DELETE" });
+      if (res.status === 401) { location.href = "/login"; return; }
+      if (!res.ok) { toast(I18N.t("job_delete_fail")); return; }
+      jobs = jobs.filter((j) => j.id !== id);
+      // só some do histórico o que foi excluído — mantém o undo das outras
+      history = history.filter((h) => h.job.id !== id);
+      renderDeck();
+    } catch (err) {
+      toast(I18N.t("job_delete_fail"));
+    }
   }
 
   /* ---------------------------------------------------------------- ações */

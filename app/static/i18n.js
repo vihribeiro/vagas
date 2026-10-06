@@ -79,6 +79,11 @@
       detail_status_saved: "Status atualizado.",
       detail_notes_saved: "Anotações salvas.",
       detail_save_error: "Erro ao salvar.",
+      job_delete: "Excluir vaga",
+      job_delete_hint: "Remove a vaga e a avaliação dela do banco de dados — sem volta.",
+      job_delete_btn: "Excluir",
+      job_delete_confirm: "Excluir esta vaga? Isso não tem volta.",
+      job_delete_fail: "Erro ao excluir a vaga.",
 
       // currículo
       cv_doc_title: "Currículo",
@@ -228,6 +233,11 @@
       detail_status_saved: "Status updated.",
       detail_notes_saved: "Notes saved.",
       detail_save_error: "Couldn't save.",
+      job_delete: "Delete job",
+      job_delete_hint: "Removes the job and its evaluation from the database — no undo.",
+      job_delete_btn: "Delete",
+      job_delete_confirm: "Delete this job? This can't be undone.",
+      job_delete_fail: "Couldn't delete the job.",
 
       cv_doc_title: "CV",
       cv_back_aria: "Back to jobs",

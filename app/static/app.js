@@ -34,6 +34,10 @@ function scoreTier(s) {
   return "fora";
 }
 
+const TRASH_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>';
+
 /* as pílulas de origem recebem a cor direto na regra, sem JS */
 function jobCard(j) {
   /* a stack decide se a vaga serve, então ela vai no card e não atrás de um
@@ -55,16 +59,51 @@ function jobCard(j) {
     ? `<span class="reco reco-${esc(j.recommendation)}">${esc(I18N.t("reco_" + j.recommendation) || j.recommendation)}</span>`
     : "";
   return `
-  <a class="job-item" href="/vagas/${j.id}" data-status="${esc(j.status)}">
-    <h3>${esc(cleanTitle)}</h3>
-    <p class="meta">${esc(j.company)}${j.location ? " · " + esc(j.location) : ""}</p>
-    ${stack}
-    <p class="foot">
-      ${badge}${reco}
-      <span class="src source-${esc(j.source || "other")}">${esc(j.source || I18N.t("source_other"))}</span>
-    </p>
-  </a>`;
+  <div class="job-card">
+    <a class="job-item" href="/vagas/${j.id}" data-status="${esc(j.status)}">
+      <h3>${esc(cleanTitle)}</h3>
+      <p class="meta">${esc(j.company)}${j.location ? " · " + esc(j.location) : ""}</p>
+      ${stack}
+      <p class="foot">
+        ${badge}${reco}
+        <span class="src source-${esc(j.source || "other")}">${esc(j.source || I18N.t("source_other"))}</span>
+      </p>
+    </a>
+    <button type="button" class="job-del" data-job-del="${j.id}"
+      aria-label="${esc(I18N.t("job_delete"))}" title="${esc(I18N.t("job_delete"))}">${TRASH_ICON}</button>
+  </div>`;
 }
+
+/* ---------------------------------------------------------------- excluir */
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.hidden = false;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => { el.hidden = true; }, 200);
+  }, 2200);
+}
+
+async function deleteJob(id) {
+  if (!confirm(I18N.t("job_delete_confirm"))) return;
+  try {
+    const res = await fetch(`/api/v1/jobs/${id}`, { method: "DELETE" });
+    if (res.status === 401) { location.href = "/login"; return; }
+    if (!res.ok) { toast(I18N.t("job_delete_fail")); return; }
+    fetchJobs();
+  } catch (err) {
+    toast(I18N.t("job_delete_fail"));
+  }
+}
+
+listEl.addEventListener("click", (e) => {
+  const del = e.target.closest("[data-job-del]");
+  if (del) deleteJob(del.dataset.jobDel);
+});
 
 /* ---------------------------------------------------------------- abas de status */
 const TABS = [
