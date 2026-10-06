@@ -5,49 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4f1ec" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#17161b" media="(prefers-color-scheme: dark)">
-  <title>Currículo</title>
+  <title data-i18n="cv_doc_title">Currículo</title>
   <link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/static/icon-192.png">
   <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <script src="/static/i18n.js?v={{ asset_version }}"></script>
   <script src="/static/theme.js?v={{ asset_version }}"></script>
 </head>
 <body>
   <header class="topbar topbar-wide">
-    <a href="/" class="topbar-back" aria-label="Voltar para as vagas">
+    <a href="/" class="topbar-back" aria-label="Voltar para as vagas" data-i18n-aria="cv_back_aria">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M15 5l-7 7 7 7"/>
       </svg>
     </a>
-    <h1>Currículo</h1>
+    <h1 data-i18n="common_curriculo">Currículo</h1>
     <div class="topbar-actions">
-      <button type="button" class="icon-btn cv-nav-toggle" data-cv-nav aria-label="Abrir lista de módulos" aria-expanded="false" aria-controls="cv-nav">
+      <button type="button" class="icon-btn cv-nav-toggle" data-cv-nav aria-label="Abrir lista de módulos" aria-expanded="false" aria-controls="cv-nav" data-i18n-aria="cv_nav_open_aria">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M4 6h16M4 12h16M4 18h10"/>
         </svg>
       </button>
+      <button type="button" class="lang-btn" data-lang-toggle aria-label="English">EN</button>
       <button type="button" class="icon-btn" data-theme-toggle></button>
     </div>
   </header>
 
   <main class="container container-wide">
     <div class="cv-layout">
-      <nav class="cv-nav" id="cv-nav" aria-label="Módulos do currículo">
-        <p class="cv-nav-title">Módulos</p>
+      <nav class="cv-nav" id="cv-nav" aria-label="Módulos do currículo" data-i18n-aria="cv_nav_aria">
+        <p class="cv-nav-title" data-i18n="cv_nav_title">Módulos</p>
         <ul class="cv-nav-list" id="cv-nav-list"></ul>
       </nav>
       <div class="cv-scrim" data-cv-scrim hidden></div>
 
       <div class="cv-body">
     <section class="cv-toolbar">
-      <p class="cv-intro">
+      <p class="cv-intro" data-i18n-html="cv_intro">
         Toque em <strong>copiar</strong> e cole direto no campo do site de
         candidatura. Cada módulo tem um botão que copia tudo de uma vez.
       </p>
       <div class="cv-toolbar-actions">
         <label class="btn quiet">
           <input type="file" id="cv-file" accept="application/pdf,.pdf" hidden>
-          <span id="cv-file-label">Importar PDF</span>
+          <span id="cv-file-label" data-i18n="cv_import_btn">Importar PDF</span>
         </label>
       </div>
     </section>
@@ -56,7 +58,7 @@
     <div id="cv-import" class="cv-import" hidden></div>
 
     <section id="cv-modules" class="cv-modules" aria-busy="true">
-      <p class="empty"><strong>Carregando</strong>Aguarde um instante.</p>
+      <p class="empty"><strong data-i18n="loading">Carregando</strong><span data-i18n="loading_wait">Aguarde um instante.</span></p>
     </section>
       </div>
     </div>

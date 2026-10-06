@@ -4,6 +4,7 @@
    A cópia é o objetivo da tela, então ela nunca depende de rede: os dados já
    estão no DOM e o texto sai do próprio elemento. */
 const $ = (id) => document.getElementById(id);
+const t = (k, p) => I18N.t(k, p);
 
 const modulesEl = $("cv-modules");
 const importEl = $("cv-import");
@@ -27,17 +28,32 @@ function setStatus(msg, tone) {
   statusEl.innerHTML = msg;
 }
 
+/* a mensagem de erro da API de currículo chega com código (varia por idioma);
+   o texto antigo (PT) continua como fallback para parsers externos. */
+function apiErr(err, fallback) {
+  const d = err && err.detail;
+  if (d && typeof d === "object" && d.code) {
+    return t(d.code) || d.message || fallback;
+  }
+  if (typeof d === "string" && d) return d;
+  return fallback;
+}
+
 /* ---------------------------------------------------------------- copiar */
 const COPY_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<rect x="9" y="9" width="11" height="11" rx="2"/>' +
   '<path d="M15 5.5A1.5 1.5 0 0 0 13.5 4h-8A1.5 1.5 0 0 0 4 5.5v8A1.5 1.5 0 0 0 5.5 15"/></svg>';
 
+function copyAria(what) {
+  return t("cv_copy_aria").replace("{what}", what || "");
+}
+
 /* navigator.clipboard só existe em contexto seguro. Acessando o homelab por
    http na rede local, cai no textarea + execCommand. */
 async function copyText(text) {
   const value = (text || "").trim();
-  if (!value) { toast("Nada para copiar ainda"); return; }
+  if (!value) { toast(t("cv_copy_nothing")); return; }
   try {
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(value);
@@ -53,9 +69,9 @@ async function copyText(text) {
       ta.remove();
       if (!ok) throw new Error("execCommand falhou");
     }
-    toast("Copiado");
+    toast(t("cv_copied"));
   } catch (err) {
-    toast("Não consegui copiar — selecione e copie à mão");
+    toast(t("cv_copy_failed"));
   }
 }
 
@@ -85,7 +101,7 @@ function moduleText(mod) {
   if (mod.kind === "text") return fieldText(mod.items[0] || {});
   return mod.items
     .map((it) => (mod.kind === "fields" ? fieldText(it) : entryText(it)))
-    .filter((t) => t.trim())
+    .filter((x) => x.trim())
     .join("\n\n");
 }
 
@@ -128,7 +144,7 @@ function navItem(mod) {
       <button type="button" class="cv-nav-link" data-goto="${esc(mod.key)}">${esc(mod.label)}</button>
       ${whole
         ? `<button type="button" class="cv-nav-copy" data-copy="${esc(whole)}"
-             data-what="${esc(mod.label)}" aria-label="Copiar ${esc(mod.label)}">${COPY_ICON}</button>`
+             data-what="${esc(mod.label)}" aria-label="${esc(copyAria(mod.label))}">${COPY_ICON}</button>`
         : ""}
     </li>`;
 }
@@ -174,16 +190,17 @@ navListEl.addEventListener("click", (e) => {
 
 function copyBtn(text, what) {
   return `<button type="button" class="copy-btn" data-copy="${esc(text)}"
-    data-what="${esc(what)}" aria-label="Copiar ${esc(what)}">${COPY_ICON}</button>`;
+    data-what="${esc(what)}" aria-label="${esc(copyAria(what))}">${COPY_ICON}</button>`;
 }
 
 function fieldRow(it) {
+  const label = it.label || t("cv_field_label");
   const value = it.value || "";
   return `
     <div class="cv-field${value ? "" : " is-empty"}">
-      <span class="cv-field-label">${esc(it.label || "Campo")}</span>
-      <span class="cv-field-value">${esc(value) || '<em>a preencher</em>'}</span>
-      ${copyBtn(value, it.label || "campo")}
+      <span class="cv-field-label">${esc(label)}</span>
+      <span class="cv-field-value">${esc(value) || `<em>${t("cv_field_empty")}</em>`}</span>
+      ${copyBtn(value, label)}
     </div>`;
 }
 
@@ -192,11 +209,11 @@ function entryCard(it) {
     <li class="cv-entry">
       <div class="cv-entry-head">
         <div class="cv-entry-titles">
-          <h4>${esc(it.title) || '<em>Sem título</em>'}</h4>
+          <h4>${esc(it.title) || `<em>${t("cv_no_title")}</em>`}</h4>
           ${it.org ? `<p class="cv-entry-org">${esc(it.org)}</p>` : ""}
           ${it.context ? `<p class="cv-entry-context">${esc(it.context)}</p>` : ""}
         </div>
-        ${copyBtn(entryText(it), it.title || "entrada")}
+        ${copyBtn(entryText(it), it.title || t("cv_entry"))}
       </div>
       ${it.period ? `<p class="cv-entry-period">${esc(it.period)}</p>` : ""}
       ${it.body ? `<p class="cv-entry-body">${esc(it.body)}</p>` : ""}
@@ -209,15 +226,15 @@ function moduleBlock(mod) {
   if (mod.kind === "text") {
     const it = mod.items[0] || {};
     inner = `
-      <p class="cv-prose${it.value ? "" : " is-empty"}">${esc(it.value) || "Resumo ainda não importado."}</p>`;
+      <p class="cv-prose${it.value ? "" : " is-empty"}">${esc(it.value) || t("cv_text_empty")}</p>`;
   } else if (mod.kind === "fields") {
     inner = mod.items.length
       ? `<div class="cv-fields">${mod.items.map(fieldRow).join("")}</div>`
-      : `<p class="cv-none">Sem itens.</p>`;
+      : `<p class="cv-none">${t("cv_none")}</p>`;
   } else {
     inner = mod.items.length
       ? `<ul class="cv-entries">${mod.items.map(entryCard).join("")}</ul>`
-      : `<p class="cv-none">Sem itens.</p>`;
+      : `<p class="cv-none">${t("cv_none")}</p>`;
   }
 
   const whole = moduleText(mod);
@@ -228,7 +245,7 @@ function moduleBlock(mod) {
         ${whole ? copyBtn(whole, mod.label) : ""}
       </header>
       ${inner}
-      <button type="button" class="cv-edit-btn" data-edit="${esc(mod.key)}">Editar</button>
+      <button type="button" class="cv-edit-btn" data-edit="${esc(mod.key)}">${t("cv_edit")}</button>
     </section>`;
 }
 
@@ -236,7 +253,7 @@ function render(list) {
   modules = list || [];
   if (!modules.length) {
     modulesEl.innerHTML =
-      '<p class="empty"><strong>Currículo vazio</strong>Importe um PDF para começar.</p>';
+      `<p class="empty"><strong>${t("cv_empty_title")}</strong>${t("cv_empty_body")}</p>`;
     modulesEl.setAttribute("aria-busy", "false");
     return;
   }
@@ -292,7 +309,7 @@ function collect() {
 
 async function save() {
   const payload = collect();
-  setStatus("Salvando", "info");
+  setStatus(t("cv_saving"), "info");
   try {
     const res = await fetch("/api/v1/cv", {
       method: "PUT",
@@ -302,15 +319,15 @@ async function save() {
     if (res.status === 401) { location.href = "/login"; return; }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      setStatus(err.detail || "Falha ao salvar", "err");
+      setStatus(apiErr(err, t("cv_save_fail")), "err");
       return;
     }
     const data = await load();
-    setStatus("Salvo", "ok");
-    toast("Currículo salvo");
+    setStatus(t("cv_saved"), "ok");
+    toast(t("cv_saved_toast"));
     render(data.modules);
   } catch (err) {
-    setStatus("Sem conexão para salvar", "err");
+    setStatus(t("cv_save_offline"), "err");
   }
 }
 
@@ -318,12 +335,12 @@ async function save() {
 function editRow(mod, it, i) {
   return `
     <div class="cv-edit-row" data-field data-index="${i}">
-      <label class="visually-hidden" for="l-${esc(mod.key)}-${i}">Rótulo</label>
+      <label class="visually-hidden" for="l-${esc(mod.key)}-${i}">${t("cv_label")}</label>
       <input id="l-${esc(mod.key)}-${i}" class="cv-in" data-slot="${esc(mod.key)}.${i}.label"
-        value="${esc(it.label)}" placeholder="Rótulo">
-      <label class="visually-hidden" for="v-${esc(mod.key)}-${i}">Valor</label>
+        value="${esc(it.label)}" placeholder="${t("cv_label")}">
+      <label class="visually-hidden" for="v-${esc(mod.key)}-${i}">${t("cv_value")}</label>
       <input id="v-${esc(mod.key)}-${i}" class="cv-in cv-in-wide" data-slot="${esc(mod.key)}.${i}.value"
-        value="${esc(it.value)}" placeholder="Valor">
+        value="${esc(it.value)}" placeholder="${t("cv_value")}">
     </div>`;
 }
 
@@ -338,15 +355,15 @@ function editEntry(mod, it, i) {
   return `
     <li class="cv-edit-entry" data-entry data-index="${i}">
       <div class="cv-edit-head">
-        <strong>${esc(it.title) || "Nova entrada"}</strong>
-        <button type="button" class="cv-del" data-del="${esc(mod.key)}.${i}">Remover</button>
+        <strong>${esc(it.title) || t("cv_new_entry")}</strong>
+        <button type="button" class="cv-del" data-del="${esc(mod.key)}.${i}">${t("cv_remove")}</button>
       </div>
-      ${row("title", "Título", it.title)}
-      ${row("org", "Organização", it.org)}
-      ${row("context", "Contexto", it.context)}
-      ${row("period", "Período", it.period)}
-      ${row("body", "Descrição", it.body, true)}
-      ${row("links", "Links", it.links)}
+      ${row("title", t("cv_title"), it.title)}
+      ${row("org", t("cv_org"), it.org)}
+      ${row("context", t("cv_context"), it.context)}
+      ${row("period", t("cv_period"), it.period)}
+      ${row("body", t("cv_body"), it.body, true)}
+      ${row("links", t("cv_links"), it.links)}
     </li>`;
 }
 
@@ -364,19 +381,19 @@ function startEdit(key) {
     body.className = "cv-prose is-editing";
     body.dataset.editing = "1";
     body.innerHTML = `
-      <label class="visually-hidden" for="cv-${key}-value">Resumo profissional</label>
+      <label class="visually-hidden" for="cv-${key}-value">${t("cv_resumo_label")}</label>
       <textarea class="cv-in" rows="8" id="cv-${key}-value"
         data-slot="${key}.value">${esc(it.value)}</textarea>`;
   } else if (mod.kind === "fields") {
     body.className = "cv-fields is-editing";
     body.dataset.editing = "1";
     body.innerHTML = mod.items.map((it, i) => editRow(mod, it, i)).join("") +
-      `<button type="button" class="cv-add" data-add="${key}">Adicionar campo</button>`;
+      `<button type="button" class="cv-add" data-add="${key}">${t("cv_add_field")}</button>`;
   } else {
     body.className = "cv-entries is-editing";
     body.dataset.editing = "1";
     body.innerHTML = mod.items.map((it, i) => editEntry(mod, it, i)).join("") +
-      `<button type="button" class="cv-add" data-add="${key}">Adicionar entrada</button>`;
+      `<button type="button" class="cv-add" data-add="${key}">${t("cv_add_entry")}</button>`;
   }
 
   const btn = block.querySelector("[data-edit]");
@@ -387,8 +404,8 @@ function startEdit(key) {
     bar.id = "cv-savebar";
     bar.className = "cv-savebar";
     bar.innerHTML = `
-      <button type="button" class="btn primary" data-save>Salvar currículo</button>
-      <button type="button" class="btn quiet" data-cancel>Cancelar</button>`;
+      <button type="button" class="btn primary" data-save>${t("cv_savebar_save")}</button>
+      <button type="button" class="btn quiet" data-cancel>${t("cv_savebar_cancel")}</button>`;
     modulesEl.appendChild(bar);
   }
   document.getElementById("cv-savebar").scrollIntoView({ block: "nearest" });
@@ -406,7 +423,7 @@ modulesEl.addEventListener("click", (e) => {
     const mod = modules.find((m) => m.key === add.dataset.add);
     if (!mod) return;
     const blank = mod.kind === "fields"
-      ? { label: "Campo", value: "" }
+      ? { label: t("cv_field_label"), value: "" }
       : { title: "", org: "", context: "", period: "", body: "", links: "" };
     mod.items.push(blank);
     const block = modulesEl.querySelector(`[data-module="${mod.key}"]`);
@@ -475,23 +492,21 @@ function importPreview(payload) {
 
   importEl.innerHTML = `
     <div class="cv-import-head">
-      <h3>Revise antes de salvar</h3>
-      <p>O parser é afinado ao formato deste currículo. Confira a tabela e
-      ajuste o que estiver errado depois de salvar.</p>
+      <h3>${t("cv_import_review")}</h3>
+      <p>${t("cv_import_note")}</p>
     </div>
     ${payload.unmapped && payload.unmapped.length
-      ? `<p class="cv-warn">Seções não reconhecidas (o texto delas não foi
-         importado): <strong>${payload.unmapped.map(esc).join(", ")}</strong></p>`
+      ? `<p class="cv-warn">${t("cv_import_unmapped")} <strong>${payload.unmapped.map(esc).join(", ")}</strong></p>`
       : ""}
     <table class="cv-import-table">
-      <caption class="visually-hidden">Módulos lidos do PDF</caption>
-      <thead><tr><th scope="col">Módulo</th><th scope="col">Itens</th>
-        <th scope="col">Preenchidos</th></tr></thead>
+      <caption class="visually-hidden">${t("cv_import_caption")}</caption>
+      <thead><tr><th scope="col">${t("cv_import_col_module")}</th><th scope="col">${t("cv_import_col_items")}</th>
+        <th scope="col">${t("cv_import_col_filled")}</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="cv-import-actions">
-      <button type="button" class="btn primary" data-import-save>Salvar no currículo</button>
-      <button type="button" class="btn quiet" data-import-cancel>Descartar</button>
+      <button type="button" class="btn primary" data-import-save>${t("cv_import_save")}</button>
+      <button type="button" class="btn quiet" data-import-cancel>${t("cv_import_discard")}</button>
     </div>`;
   importEl.hidden = false;
   importEl.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -518,7 +533,7 @@ importEl.addEventListener("click", async (e) => {
     if (res.status === 401) { location.href = "/login"; return; }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      setStatus(err.detail || "Falha ao salvar", "err");
+      setStatus(apiErr(err, t("cv_save_fail")), "err");
       return;
     }
     importEl.hidden = true;
@@ -526,18 +541,18 @@ importEl.addEventListener("click", async (e) => {
     pendingImport = null;
     const data = await load();
     render(data.modules);
-    setStatus("Currículo importado do PDF", "ok");
-    toast("Currículo importado");
+    setStatus(t("cv_imported_ok"), "ok");
+    toast(t("cv_imported_toast"));
   } catch (err) {
-    setStatus("Sem conexão para salvar", "err");
+    setStatus(t("cv_save_offline"), "err");
   }
 });
 
 fileEl.addEventListener("change", async () => {
   const file = fileEl.files && fileEl.files[0];
   if (!file) return;
-  fileLabelEl.textContent = "Lendo o PDF";
-  setStatus("Lendo o PDF", "info");
+  fileLabelEl.textContent = t("cv_import_reading");
+  setStatus(t("cv_import_reading"), "info");
 
   const form = new FormData();
   form.append("arquivo", file);
@@ -546,16 +561,16 @@ fileEl.addEventListener("change", async () => {
     if (res.status === 401) { location.href = "/login"; return; }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setStatus(data.detail || "Não consegui ler esse PDF", "err");
-      fileLabelEl.textContent = "Importar PDF";
+      setStatus(apiErr(data, t("cv_import_read_fail")), "err");
+      fileLabelEl.textContent = t("cv_import_btn");
       return;
     }
-    fileLabelEl.textContent = "Importar PDF";
+    fileLabelEl.textContent = t("cv_import_btn");
     setStatus("");
     importPreview(data);
   } catch (err) {
-    setStatus("Sem conexão para enviar o PDF", "err");
-    fileLabelEl.textContent = "Importar PDF";
+    setStatus(t("cv_import_offline"), "err");
+    fileLabelEl.textContent = t("cv_import_btn");
   } finally {
     fileEl.value = "";
   }
@@ -566,7 +581,7 @@ fileEl.addEventListener("change", async () => {
   const data = await load();
   render(data.modules);
   if (!modules.some((m) => m.items.some((it) => (it.title || it.value || "").trim()))) {
-    setStatus("Nada importado ainda. Use <strong>Importar PDF</strong> para ler o currículo.", "info");
+    setStatus(t("cv_boot_note"), "info");
   }
 })();
 

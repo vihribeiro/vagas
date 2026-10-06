@@ -52,7 +52,7 @@ function jobCard(j) {
   }
   const cleanTitle = String(j.title || "").replace(/\s*\[\d\.\d\/5\]$/, "");
   const reco = j.recommendation
-    ? `<span class="reco reco-${esc(j.recommendation)}">${esc(j.reco_label || j.recommendation)}</span>`
+    ? `<span class="reco reco-${esc(j.recommendation)}">${esc(I18N.t("reco_" + j.recommendation) || j.recommendation)}</span>`
     : "";
   return `
   <a class="job-item" href="/vagas/${j.id}" data-status="${esc(j.status)}">
@@ -61,18 +61,18 @@ function jobCard(j) {
     ${stack}
     <p class="foot">
       ${badge}${reco}
-      <span class="src source-${esc(j.source || "other")}">${esc(j.source || "outro")}</span>
+      <span class="src source-${esc(j.source || "other")}">${esc(j.source || I18N.t("source_other"))}</span>
     </p>
   </a>`;
 }
 
 /* ---------------------------------------------------------------- abas de status */
 const TABS = [
-  { value: "", label: "Todas" },
-  { value: "pending", label: "Pendentes" },
-  { value: "applied", label: "Candidatadas" },
-  { value: "rejected", label: "Recusadas" },
-  { value: "dismissed", label: "Dispensadas" },
+  { value: "", key: "tab_all" },
+  { value: "pending", key: "tab_pending" },
+  { value: "applied", key: "tab_applied" },
+  { value: "rejected", key: "tab_rejected" },
+  { value: "dismissed", key: "tab_dismissed" },
 ];
 
 function renderTabs(counts, total) {
@@ -80,7 +80,7 @@ function renderTabs(counts, total) {
     const n = t.value ? (counts[t.value] || 0) : total;
     const on = state.status === t.value;
     return `<button type="button" class="tab" data-status="${t.value}"
-      aria-pressed="${on}">${t.label}<span class="n">${n}</span></button>`;
+      aria-pressed="${on}">${I18N.t(t.key)}<span class="n">${n}</span></button>`;
   }).join("");
 }
 
@@ -177,7 +177,7 @@ async function fetchJobs() {
     render(data.jobs || []);
   } catch (err) {
     listEl.innerHTML =
-      '<p class="empty"><strong>Sem conexão</strong>Não foi possível carregar as vagas.</p>';
+      `<p class="empty"><strong>${I18N.t("app_offline_title")}</strong>${I18N.t("app_offline_body")}</p>`;
   } finally {
     listEl.setAttribute("aria-busy", "false");
   }
@@ -201,7 +201,7 @@ function render(jobs) {
 
   if (!jobs.length) {
     listEl.innerHTML =
-      '<p class="empty"><strong>Nada por aqui</strong>Nenhuma vaga bate com esses filtros.</p>';
+      `<p class="empty"><strong>${I18N.t("app_empty_title")}</strong>${I18N.t("app_empty_body")}</p>`;
     return;
   }
   listEl.innerHTML = jobs.map(jobCard).join("");

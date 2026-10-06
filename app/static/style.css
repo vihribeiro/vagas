@@ -255,8 +255,30 @@ a { color: var(--accent); }
 
 .icon-btn svg { width: 19px; height: 19px; display: block; }
 
+.lang-btn {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text-faint);
+  font-size: .88rem;
+  font-weight: 500;
+  padding: 9px 8px;
+  border-radius: var(--radius-sm);
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.lang-btn-corner {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: 16px;
+  z-index: 40;
+}
+
 @media (hover: hover) {
-  .link:hover, .icon-btn:hover { color: var(--text); background: var(--bg-sunk); }
+  .link:hover, .icon-btn:hover, .lang-btn:hover { color: var(--text); background: var(--bg-sunk); }
 }
 
 /* ---------------------------------------------------------------- busca */

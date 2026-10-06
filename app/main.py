@@ -84,7 +84,7 @@ def reco_for(score: float | None) -> str:
 # mudarem: sem isso o Cache Storage do service worker pode entregar a versão
 # anterior do arquivo mesmo após o deploy. O mesmo valor aparece no SHELL do
 # app/static/sw.js — os dois precisam andar juntos.
-ASSET_VERSION = "24"
+ASSET_VERSION = "25"
 
 
 def now_iso() -> str:
@@ -444,7 +444,7 @@ def login(request: Request, password: str = Form("")):
         request.session["auth"] = True
         return RedirectResponse("/", status_code=302)
     return templates.TemplateResponse(
-        request, "login.html", {"error": "Senha incorreta."}, status_code=401
+        request, "login.html", {"error": "wrong_password"}, status_code=401
     )
 
 
@@ -751,10 +751,16 @@ def _sanitize_cv(key: str, raw: object) -> list:
     """
     spec = next((m for m in cv_parser.MODULES if m[0] == key), None)
     if spec is None:
-        raise HTTPException(status_code=404, detail="módulo de currículo desconhecido")
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "cv_module_unknown", "message": "módulo de currículo desconhecido"},
+        )
     _key, _label, kind, _split = spec
     if not isinstance(raw, list):
-        raise HTTPException(status_code=400, detail="itens precisa ser uma lista")
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "cv_items_not_list", "message": "itens precisa ser uma lista"},
+        )
 
     slots = {"fields": ("label", "value"), "text": ("label", "value")}
     slots["entries"] = ("title", "org", "context", "period", "body", "links")
@@ -782,14 +788,20 @@ async def api_save_cv(request: Request):
 
     incoming = body.get("modules")
     if not isinstance(incoming, dict):
-        raise HTTPException(status_code=400, detail="'modules' precisa ser um objeto")
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "cv_modules_not_object", "message": "'modules' precisa ser um objeto"},
+        )
 
     valid = {key for key, _l, _k, _s in cv_parser.MODULES}
     unknown = set(incoming) - valid
     if unknown:
         raise HTTPException(
             status_code=400,
-            detail=f"módulo desconhecido: {', '.join(sorted(unknown))}",
+            detail={
+                "code": "cv_module_unknown",
+                "message": f"módulo desconhecido: {', '.join(sorted(unknown))}",
+            },
         )
 
     clean = {key: _sanitize_cv(key, val) for key, val in incoming.items()}
@@ -822,21 +834,32 @@ async def api_import_cv(request: Request, arquivo: UploadFile = File(...)):
     require_login(request)
     filename = (arquivo.filename or "").lower()
     if not filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="envie um arquivo .pdf")
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "cv_import_pdf", "message": "envie um arquivo .pdf"},
+        )
 
     raw = await arquivo.read()
     if not raw:
-        raise HTTPException(status_code=400, detail="arquivo vazio")
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "cv_import_empty", "message": "arquivo vazio"},
+        )
     if len(raw) > CV_MAX_UPLOAD:
         raise HTTPException(
-            status_code=413, detail=f"arquivo maior que {CV_MAX_UPLOAD // (1024 * 1024)}MB"
+            status_code=413,
+            detail={
+                "code": "cv_import_too_big",
+                "message": f"arquivo maior que {CV_MAX_UPLOAD // (1024 * 1024)}MB",
+            },
         )
 
     try:
         parsed = cv_parser.parse_cv(raw)
     except Exception as exc:  # PDF corrompido, protegido, sem texto, etc.
         raise HTTPException(
-            status_code=422, detail=f"não consegui ler o PDF: {exc}"
+            status_code=422,
+            detail={"code": "cv_import_unreadable", "message": f"não consegui ler o PDF: {exc}"},
         )
 
     payload = []

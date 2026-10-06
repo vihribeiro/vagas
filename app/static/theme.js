@@ -3,23 +3,26 @@
 (function () {
   var KEY = "vagas-theme";
   var mq = window.matchMedia("(prefers-color-scheme: dark)");
+  // i18n.js carrega antes deste arquivo no <head>; o t() traduz a a11y dos
+  // botões e cai na chave crua se, por algum motivo, não estiver disponível.
+  var t = (window.I18N && I18N.t) ? I18N.t : function (k) { return k; };
 
   function stored() {
     try { return localStorage.getItem(KEY); } catch (e) { return null; }
   }
 
   function apply() {
-    var t = stored();
-    if (t === "light" || t === "dark") {
-      document.documentElement.setAttribute("data-theme", t);
+    var vt = stored();
+    if (vt === "light" || vt === "dark") {
+      document.documentElement.setAttribute("data-theme", vt);
     } else {
       document.documentElement.removeAttribute("data-theme");
     }
   }
 
   function current() {
-    var t = stored();
-    if (t === "light" || t === "dark") return t;
+    var vt = stored();
+    if (vt === "light" || vt === "dark") return vt;
     return mq.matches ? "dark" : "light";
   }
 
@@ -38,7 +41,7 @@
     for (var i = 0; i < btns.length; i++) {
       var btn = btns[i];
       btn.innerHTML = dark ? SUN : MOON;
-      var label = dark ? "Ativar tema claro" : "Ativar tema escuro";
+      var label = dark ? t("theme_light") : t("theme_dark");
       btn.setAttribute("aria-label", label);
       btn.setAttribute("title", label);
       if (btn.dataset.wired) continue;

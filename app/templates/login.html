@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4f1ec" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#17161b" media="(prefers-color-scheme: dark)">
-  <title>Vagas — Entrar</title>
+  <title data-i18n="login_doc_title">Vagas — Entrar</title>
   <link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/static/icon-192.png">
+  <script src="/static/i18n.js?v={{ asset_version }}"></script>
   <script src="/static/theme.js?v={{ asset_version }}"></script>
 </head>
 <body>
+  <button type="button" class="lang-btn lang-btn-corner" data-lang-toggle aria-label="English">EN</button>
   <main class="login-wrap">
     <div class="login-card">
       <div class="login-mark" aria-hidden="true">
@@ -23,17 +25,18 @@
       </div>
 
       <h1>Vagas</h1>
-      <p>Digite a senha para acessar o painel.</p>
+      <p data-i18n="login_tagline">Digite a senha para acessar o painel.</p>
 
       {% if error %}
-      <p class="error">{{ error }}</p>
+      <p class="error" data-i18n="login_wrong_password">Senha incorreta.</p>
       {% endif %}
 
       <form method="post" action="/login">
-        <label class="visually-hidden" for="password">Senha</label>
+        <label class="visually-hidden" for="password" data-i18n="login_password">Senha</label>
         <input type="password" id="password" name="password" placeholder="Senha"
+               data-i18n-placeholder="login_password"
                autocomplete="current-password" required autofocus>
-        <button type="submit" class="btn primary">Entrar</button>
+        <button type="submit" class="btn primary" data-i18n="login_submit">Entrar</button>
       </form>
     </div>
   </main>

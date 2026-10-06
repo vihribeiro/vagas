@@ -10,22 +10,24 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/static/icon-192.png">
   <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <script src="/static/i18n.js?v={{ asset_version }}"></script>
   <script src="/static/theme.js?v={{ asset_version }}"></script>
 </head>
 <body>
   <header class="topbar">
     <h1>Vagas</h1>
     <div class="topbar-actions">
-      <a href="/curriculo" class="link">Currículo</a>
+      <a href="/curriculo" class="link" data-i18n="common_curriculo">Currículo</a>
+      <button type="button" class="lang-btn" data-lang-toggle aria-label="English">EN</button>
       <button type="button" class="icon-btn" data-theme-toggle></button>
-      <a href="/logout" class="link">Sair</a>
+      <a href="/logout" class="link" data-i18n="common_sair">Sair</a>
     </div>
   </header>
 
   <main class="container">
-    <nav class="view-toggle" id="view-toggle" aria-label="Modo de visualização">
-      <button type="button" class="view-btn" data-view="swipe" aria-pressed="true">Deslizar</button>
-      <button type="button" class="view-btn" data-view="list" aria-pressed="false">Lista</button>
+    <nav class="view-toggle" id="view-toggle" aria-label="Modo de visualização" data-i18n-aria="nav_view_aria">
+      <button type="button" class="view-btn" data-view="swipe" aria-pressed="true" data-i18n="view_swipe">Deslizar</button>
+      <button type="button" class="view-btn" data-view="list" aria-pressed="false" data-i18n="view_list">Lista</button>
     </nav>
 
     <section class="controls" id="list-controls">
@@ -33,9 +35,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>
         </svg>
-        <label class="visually-hidden" for="f-q">Buscar vagas</label>
-        <input type="search" id="f-q" placeholder="Título, empresa ou local" autocomplete="off">
-        <button type="button" class="search-clear" id="f-q-clear" aria-label="Limpar busca">
+        <label class="visually-hidden" for="f-q" data-i18n="search_label">Buscar vagas</label>
+        <input type="search" id="f-q" placeholder="Título, empresa ou local" autocomplete="off" data-i18n-placeholder="search_placeholder">
+        <button type="button" class="search-clear" id="f-q-clear" aria-label="Limpar busca" data-i18n-aria="search_clear_aria">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
             <path d="M6 6l12 12M18 6L6 18"/>
           </svg>
@@ -43,24 +45,24 @@
       </div>
 
       <div class="pill-row" id="source-row" hidden>
-        <span class="pill-row-label" aria-hidden="true">Origem</span>
-        <div class="scroller" id="source-pills" role="group" aria-label="Filtrar por origem"></div>
+        <span class="pill-row-label" aria-hidden="true" data-i18n="source_row_label">Origem</span>
+        <div class="scroller" id="source-pills" role="group" aria-label="Filtrar por origem" data-i18n-aria="source_filter_aria"></div>
       </div>
     </section>
 
-    <nav class="status-tabs" id="status-tabs" aria-label="Filtrar por status"></nav>
+    <nav class="status-tabs" id="status-tabs" aria-label="Filtrar por status" data-i18n-aria="status_filter_aria"></nav>
 
     <section id="list" class="job-list" aria-live="polite" aria-busy="true">
-      <p class="empty"><strong>Carregando</strong>Aguarde um instante.</p>
+      <p class="empty"><strong data-i18n="loading">Carregando</strong><span data-i18n="loading_wait">Aguarde um instante.</span></p>
     </section>
 
     <!-- Modo deslizar: o baralho de vagas pendentes, uma por vez, com
          deslize (ou botões / setas) para candidatar ou dispensar. -->
     <section id="swipe" class="swipe" aria-live="polite" hidden>
       <div class="swipe-deck" id="swipe-deck">
-        <p class="empty"><strong>Carregando</strong>Aguarde um instante.</p>
+        <p class="empty"><strong data-i18n="loading">Carregando</strong><span data-i18n="loading_wait">Aguarde um instante.</span></p>
       </div>
-      <p class="swipe-hint" id="swipe-hint" hidden>
+      <p class="swipe-hint" id="swipe-hint" hidden data-i18n="swipe_hint">
         Deslize para o lado (ou use ← para candidatar, → para dispensar)
       </p>
       <div class="swipe-actions">
@@ -68,9 +70,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M6 6l12 12M18 6L6 18"/>
           </svg>
-          Dispensar
+          <span data-i18n="swipe_dismiss">Dispensar</span>
         </button>
-        <button type="button" class="icon-btn swipe-undo" id="swipe-undo" aria-label="Desfazer" title="Desfazer" hidden>
+        <button type="button" class="icon-btn swipe-undo" id="swipe-undo" aria-label="Desfazer" title="Desfazer" data-i18n-aria="undo_aria" data-i18n-title="undo_aria" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>
           </svg>
@@ -79,7 +81,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.5"/>
           </svg>
-          Candidatar
+          <span data-i18n="swipe_apply">Candidatar</span>
         </button>
       </div>
     </section>

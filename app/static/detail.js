@@ -3,6 +3,7 @@ const msgEl = document.getElementById("save-msg");
 const notesEl = document.getElementById("notes");
 const statusBtns = Array.from(document.querySelectorAll(".status-btns .btn"));
 const statusPill = document.querySelector(".tag-row .pill");
+const STATUS_KEYS = { pending: 1, applied: 1, rejected: 1, dismissed: 1 };
 
 let msgTimer = null;
 
@@ -16,10 +17,9 @@ function showMsg(text, ok = true) {
 function markActive(status) {
   statusBtns.forEach((b) => b.classList.toggle("active", b.dataset.status === status));
   // mantém o selo do topo em dia com o botão marcado
-  var match = statusBtns.find((b) => b.dataset.status === status);
-  if (match && statusPill) {
+  if (statusPill && STATUS_KEYS[status]) {
     statusPill.className = "pill status-" + status;
-    statusPill.textContent = match.dataset.label;
+    statusPill.textContent = I18N.t("status_" + status);
   }
 }
 
@@ -30,7 +30,7 @@ async function patchStatus(status, notes) {
     body: JSON.stringify({ status, notes }),
   });
   if (res.status === 401) { location.href = "/login"; return null; }
-  if (!res.ok) { showMsg("Erro ao salvar.", false); return null; }
+  if (!res.ok) { showMsg(I18N.t("detail_save_error"), false); return null; }
   return res.json();
 }
 
@@ -46,7 +46,7 @@ statusBtns.forEach((btn) => {
     busy(false);
     if (data) {
       markActive(data.status);
-      showMsg("Status atualizado.");
+      showMsg(I18N.t("detail_status_saved"));
     }
   });
 });
@@ -59,7 +59,7 @@ document.getElementById("save-notes").addEventListener("click", async () => {
   busy(false);
   if (data) {
     markActive(data.status);
-    showMsg("Anotações salvas.");
+    showMsg(I18N.t("detail_notes_saved"));
   }
 });
 

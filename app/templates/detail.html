@@ -9,14 +9,16 @@
   <link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/static/icon-192.png">
+  <script src="/static/i18n.js?v={{ asset_version }}"></script>
   <script src="/static/theme.js?v={{ asset_version }}"></script>
 </head>
 <body>
   <header class="topbar">
-    <a href="/" class="link">Voltar</a>
+    <a href="/" class="link" data-i18n="detail_back">Voltar</a>
     <div class="topbar-actions">
+      <button type="button" class="lang-btn" data-lang-toggle aria-label="English">EN</button>
       <button type="button" class="icon-btn" data-theme-toggle></button>
-      <a href="/logout" class="link">Sair</a>
+      <a href="/logout" class="link" data-i18n="common_sair">Sair</a>
     </div>
   </header>
 
@@ -28,11 +30,13 @@
       </p>
       <div class="tag-row">
         <span class="badge source-{{ job.source or 'other' }}">{{ job.source or 'outro' }}</span>
-        <span class="pill status-{{ job.status }}">{{ job.status_label }}</span>
+        <span class="pill status-{{ job.status }}" data-i18n="status_{{ job.status }}">{{ job.status_label }}</span>
         {% if job.score is not none %}
         <span class="score" data-tier="{{ job.tier }}">{{ '%.1f'|format(job.score) }}</span>
         {% endif %}
-        {% if job.email_date %}<span class="date">e-mail de {{ job.email_date }}</span>{% endif %}
+        {% if job.email_date %}
+        <span class="date" data-i18n="detail_email_date" data-i18n-params='{"date":"{{ job.email_date }}"}'></span>
+        {% endif %}
       </div>
       {% if job.notes %}
       <p class="detail-stack">{{ job.notes }}</p>
@@ -41,21 +45,21 @@
 
     {% if job.score is not none or job.recommendation %}
     <section class="group eval-group">
-      <h3 class="section-title">Avaliação do agente</h3>
+      <h3 class="section-title" data-i18n="detail_agent_eval">Avaliação do agente</h3>
       <div class="eval-head">
         {% if job.score is not none %}
         <span class="score" data-tier="{{ job.tier }}">{{ '%.1f'|format(job.score) }}</span>
         {% endif %}
         {% if job.recommendation %}
-        <span class="pill reco-{{ job.recommendation }}">{{ job.reco_label }}</span>
+        <span class="pill reco-{{ job.recommendation }}" data-i18n="reco_{{ job.recommendation }}">{{ job.reco_label }}</span>
         {% endif %}
         {% if job.scored_by %}
-        <span class="date">por {{ job.scored_by }}</span>
+        <span class="date" data-i18n="detail_scored_by" data-i18n-params='{"who":"{{ job.scored_by }}"}'></span>
         {% endif %}
       </div>
       {% if job.reasons %}
       <div class="eval-group-item">
-        <h4 class="eval-label">Motivos</h4>
+        <h4 class="eval-label" data-i18n="detail_reasons">Motivos</h4>
         <ul class="eval-list">
           {% for reason in job.reasons %}<li>{{ reason }}</li>{% endfor %}
         </ul>
@@ -63,7 +67,7 @@
       {% endif %}
       {% if job.tips %}
       <div class="eval-group-item">
-        <h4 class="eval-label">Dicas</h4>
+        <h4 class="eval-label" data-i18n="detail_tips">Dicas</h4>
         <ul class="eval-list">
           {% for tip in job.tips %}<li>{{ tip }}</li>{% endfor %}
         </ul>
@@ -73,14 +77,14 @@
     {% endif %}
 
     <section class="group">
-      <h3 class="section-title">Onde se candidatar</h3>
+      <h3 class="section-title" data-i18n="detail_apply_where">Onde se candidatar</h3>
       <div class="actions">
         {% if job.source_url %}
         <a href="{{ job.source_url }}" target="_blank" rel="noopener" class="btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.5"/>
           </svg>
-          Anúncio original
+          <span data-i18n="detail_original">Anúncio original</span>
         </a>
         {% endif %}
         <a class="btn" target="_blank" rel="noopener"
@@ -88,26 +92,27 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
             <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>
           </svg>
-          Buscar no Google
+          <span data-i18n="detail_google">Buscar no Google</span>
         </a>
       </div>
 
     </section>
 
     <section class="group">
-      <h3 class="section-title">Status</h3>
+      <h3 class="section-title" data-i18n="detail_status">Status</h3>
       <div class="status-btns">
-        <button class="btn" data-status="pending" data-label="Pendente">Pendente</button>
-        <button class="btn" data-status="applied" data-label="Candidatado">Candidatei-me</button>
-        <button class="btn" data-status="rejected" data-label="Recusado">Recusar</button>
-        <button class="btn" data-status="dismissed" data-label="Dispensada">Dispensar</button>
+        <button type="button" class="btn" data-status="pending" data-i18n="status_btn_pending">Pendente</button>
+        <button type="button" class="btn" data-status="applied" data-i18n="status_btn_applied">Candidatei-me</button>
+        <button type="button" class="btn" data-status="rejected" data-i18n="status_btn_rejected">Recusar</button>
+        <button type="button" class="btn" data-status="dismissed" data-i18n="status_btn_dismissed">Dispensar</button>
       </div>
 
-      <h3 class="section-title">Anotações</h3>
-      <label class="visually-hidden" for="notes">Anotações sobre a vaga</label>
+      <h3 class="section-title" data-i18n="detail_notes">Anotações</h3>
+      <label class="visually-hidden" for="notes" data-i18n="detail_notes_label">Anotações sobre a vaga</label>
       <textarea id="notes" rows="4"
-                placeholder="Ex.: me candidatei pelo site da empresa em 04/10">{{ job.status_notes }}</textarea>
-      <button id="save-notes" class="btn primary block">Salvar anotações</button>
+                placeholder="Ex.: me candidatei pelo site da empresa em 04/10"
+                data-i18n-placeholder="detail_notes_placeholder">{{ job.status_notes }}</textarea>
+      <button id="save-notes" class="btn primary block" data-i18n="detail_save_notes">Salvar anotações</button>
       <p class="save-msg" id="save-msg" role="status" aria-live="polite"></p>
     </section>
   </main>

@@ -32,12 +32,12 @@
     if (!iso) return "";
     const d = new Date(iso);
     if (isNaN(d)) return "";
-    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+    return d.toLocaleDateString(I18N.locale(), { day: "2-digit", month: "short" });
   }
 
   function recoPill(j) {
     if (!j.recommendation) return "";
-    return `<span class="reco reco-${esc(j.recommendation)}">${esc(j.reco_label || j.recommendation)}</span>`;
+    return `<span class="reco reco-${esc(j.recommendation)}">${esc(I18N.t("reco_" + j.recommendation) || j.recommendation)}</span>`;
   }
 
   function scoreBadge(j) {
@@ -60,23 +60,23 @@
       <article class="swipe-card" data-id="${j.id}">
         <div class="swipe-card-top">
           ${scoreBadge(j)}${recoPill(j)}
-          <span class="src source-${esc(j.source || "other")}">${esc(j.source || "outro")}</span>
+          <span class="src source-${esc(j.source || "other")}">${esc(j.source || I18N.t("source_other"))}</span>
         </div>
         <h2 class="swipe-title">${esc(String(j.title || "").replace(/\s*\[\d\.\d\/5\]$/, ""))}</h2>
         <p class="swipe-meta">${esc(j.company || "—")}${j.location ? " · " + esc(j.location) : ""}${date ? " · " + date : ""}</p>
         ${j.notes ? `<p class="swipe-stack">${esc(j.notes)}</p>` : ""}
 
         <div class="swipe-eval">
-          ${reasons ? `<div class="swipe-group"><h3>Motivos</h3><ul class="swipe-list">${reasons}</ul></div>` : ""}
-          ${tips ? `<div class="swipe-group"><h3>Dicas do agente</h3><ul class="swipe-list tips">${tips}</ul></div>` : ""}
-          ${!reasons && !tips ? `<p class="swipe-none">Ainda sem avaliação do agente — importe o currículo e rode o ranqueador.</p>` : ""}
+          ${reasons ? `<div class="swipe-group"><h3>${I18N.t("swipe_reasons")}</h3><ul class="swipe-list">${reasons}</ul></div>` : ""}
+          ${tips ? `<div class="swipe-group"><h3>${I18N.t("swipe_tips")}</h3><ul class="swipe-list tips">${tips}</ul></div>` : ""}
+          ${!reasons && !tips ? `<p class="swipe-none">${I18N.t("swipe_no_eval")}</p>` : ""}
         </div>
 
         <footer class="swipe-links">
           ${j.source_url
-            ? `<a class="btn" href="${esc(j.source_url)}" target="_blank" rel="noopener">Anúncio original</a>`
+            ? `<a class="btn" href="${esc(j.source_url)}" target="_blank" rel="noopener">${I18N.t("swipe_original")}</a>`
             : ""}
-          <a class="btn quiet" href="/vagas/${j.id}">Ver detalhe</a>
+          <a class="btn quiet" href="/vagas/${j.id}">${I18N.t("swipe_detail")}</a>
         </footer>
       </article>`;
   }
@@ -84,10 +84,10 @@
   function renderDeck() {
     if (!jobs.length) {
       deckEl.innerHTML = `
-        <p class="empty"><strong>Todas decididas</strong>
-          Nenhuma vaga pendente. Volte para a lista para rever o que marcou.
+        <p class="empty"><strong>${I18N.t("swipe_all_done")}</strong>
+          ${I18N.t("swipe_all_done_body")}
         </p>
-        <p class="empty-cta"><button type="button" class="btn primary" id="swipe-back-list">Ver lista</button></p>`;
+        <p class="empty-cta"><button type="button" class="btn primary" id="swipe-back-list">${I18N.t("swipe_view_list")}</button></p>`;
       hintEl.hidden = true;
       undoBtn.hidden = history.length === 0;
       deckEl.querySelector("#swipe-back-list")?.addEventListener("click", () =>
@@ -157,7 +157,7 @@
         card.style.pointerEvents = "";
       }
       busy = false;
-      toast("Não consegui registrar — confira a conexão");
+      toast(I18N.t("swipe_reg_fail"));
       return;
     }
 
@@ -180,7 +180,7 @@
     const ok = await patchStatus(last.job.id, "pending");
     if (!ok) {
       history.push(last);
-      toast("Não consegui desfazer — confira a conexão");
+      toast(I18N.t("swipe_undo_fail"));
     } else {
       jobs.unshift(last.job);
     }
@@ -211,7 +211,7 @@
 
   async function load() {
     deckEl.innerHTML =
-      '<p class="empty"><strong>Carregando</strong>Aguarde um instante.</p>';
+      `<p class="empty"><strong>${I18N.t("loading")}</strong>${I18N.t("loading_wait")}</p>`;
     try {
       const res = await fetch("/api/v1/jobs?status=pending");
       if (res.status === 401) { location.href = "/login"; return; }
@@ -221,7 +221,7 @@
       renderDeck();
     } catch (err) {
       deckEl.innerHTML =
-        '<p class="empty"><strong>Sem conexão</strong>Não foi possível carregar as vagas.</p>';
+        `<p class="empty"><strong>${I18N.t("app_offline_title")}</strong>${I18N.t("app_offline_body")}</p>`;
     }
   }
 

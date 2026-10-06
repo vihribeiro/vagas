@@ -1,5 +1,7 @@
 # Vagas App
 
+> 🌐 [English version](README_EN.md)
+
 Painel pessoal para acompanhar vagas de emprego e se candidatar rápido, com um
 **baralho deslizante** para decidir em segundos e uma **gaveta de currículo**
 que separa o CV em blocos prontos para copiar e colar.
@@ -27,6 +29,8 @@ provedor configurado, o app já funciona sozinho — as vagas é que ficam sem n
   (Aplicar / Considerar / Evitar), **motivos** e **dicas** — além de anotações
   suas.
 - **PWA:** instala como app no celular (requer HTTPS em produção).
+- **Dois idiomas:** interface em português (padrão) e inglês, com botão de
+  troca no topo — a escolha fica salva e navegador em inglês cai direto no EN.
 
 ## Como funciona
 
