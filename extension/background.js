@@ -45,6 +45,7 @@ async function getTemplate() {
 
 async function sendJob(job) {
   const s = await getSettings();
+  if (!s.apiUrl) return { ok: false, error: "no_url" };
   if (!s.apiKey) return { ok: false, error: "no_key" };
   const payload = {
     jobs: [
@@ -60,6 +61,8 @@ async function sendJob(job) {
   };
   if (!payload.jobs[0].title) return { ok: false, error: "no_title" };
 
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
   let res;
   try {
     res = await fetch(`${s.apiUrl}/api/v1/jobs:bulk`, {
@@ -69,9 +72,13 @@ async function sendJob(job) {
         "X-API-Key": s.apiKey,
       },
       body: JSON.stringify(payload),
+      signal: ctrl.signal,
     });
   } catch (err) {
+    if (err && err.name === "AbortError") return { ok: false, error: "timeout" };
     return { ok: false, error: "network" };
+  } finally {
+    clearTimeout(timer);
   }
   if (res.status === 401 || res.status === 403) return { ok: false, error: "unauthorized" };
   if (!res.ok) return { ok: false, error: `http_${res.status}` };

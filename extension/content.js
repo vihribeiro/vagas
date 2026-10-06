@@ -29,15 +29,23 @@ function normalize(s) {
   return u(s).toLowerCase();
 }
 
-function sendMessage(msg) {
+function sendMessage(msg, timeoutMs = 15000) {
   return new Promise((resolve) => {
+    let done = false;
+    const timer = setTimeout(() => finish({ ok: false, error: "timeout" }), timeoutMs);
+    function finish(r) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(r);
+    }
     try {
       chrome.runtime.sendMessage(msg, (r) => {
-        if (chrome.runtime.lastError) resolve({ ok: false, error: "dead" });
-        else resolve(r || { ok: false, error: "empty" });
+        if (chrome.runtime.lastError) finish({ ok: false, error: "dead" });
+        else finish(r || { ok: false, error: "empty" });
       });
     } catch (err) {
-      resolve({ ok: false, error: "dead" });
+      finish({ ok: false, error: "dead" });
     }
   });
 }
@@ -246,20 +254,63 @@ function placeCardButtons() {
     btn.title = "Enviar pra vagas";
     btn.setAttribute("aria-label", "Enviar pra vagas");
     btn.addEventListener("pointerdown", (ev) => ev.stopPropagation());
-    btn.addEventListener("click", async (ev) => {
+    btn.addEventListener("pointerup", (ev) => ev.stopPropagation());
+    card.appendChild(btn);
+  }
+}
+
+/* O clique é capturado no document (fase de captura): roda ANTES de qualquer
+   handler do LinkedIn e não pode ser engolido por stopPropagation deles. */
+function errorText(res) {
+  const msgs = {
+    no_key: "Falta a chave de API — abra as Opções da extensão.",
+    unauthorized: "Chave inválida (401/403) — confira nas Opções.",
+    network: "Sem conexão com o painel — servidor fora ou URL errada.",
+    timeout: "O servidor não respondeu — confira a URL nas Opções.",
+    no_title: "Não consegui ler esta vaga.",
+    empty: "Resposta vazia da extensão — recarregue a página.",
+    dead: "Extensão não respondeu — recarregue a página.",
+  };
+  return msgs[res && res.error] || "Falha ao enviar vaga.";
+}
+
+async function handleSend(job, btn) {
+  console.log("[vagas-bridge] enviando:", job);
+  const res = await sendMessage({ type: "SEND_JOB", job });
+  console.log("[vagas-bridge] resposta:", res);
+  setState(btn, res);
+  if (res && res.ok) {
+    toast(
+      res.inserted
+        ? "Vaga enviada pro painel ✓"
+        : "Vaga já existia no painel (dedup)"
+    );
+  } else {
+    toast(errorText(res));
+  }
+}
+
+function installClickCatcher() {
+  document.addEventListener(
+    "click",
+    (ev) => {
+      const btn = ev.target && ev.target.closest && ev.target.closest(".ve-btn");
+      if (!btn) return;
       ev.preventDefault();
       ev.stopPropagation();
+      const card = btn.closest("[data-ve-card]");
+      if (!card) return;
       const job = extractCard(card);
       if (!job) {
-        toast("Não consegui ler este card — abra o console (F12) e me mande o log.");
+        console.log("[vagas-bridge] card não lido:\n", card.outerHTML.slice(0, 1800));
+        toast("Não consegui ler esta vaga — veja o console (F12).");
         setState(btn, { ok: false, error: "no_title" });
         return;
       }
-      const res = await sendMessage({ type: "SEND_JOB", job });
-      setState(btn, res);
-    });
-    card.appendChild(btn);
-  }
+      handleSend(job, btn);
+    },
+    true
+  );
 }
 
 /* ---------------------------------------------------- botão na página de detalhe */
@@ -515,6 +566,7 @@ function schedule() {
 }
 
 /* ------------------------------------------------------------------- init */
+installClickCatcher();
 sendMessage({ type: "GET_SETUP" }).then((r) => {
   if (r && r.template) template = parseTemplate(r.template);
   defaultRadio = r && r.defaultRadio ? r.defaultRadio : "none";
