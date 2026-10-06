@@ -271,7 +271,13 @@ function errorText(res) {
     empty: "Resposta vazia da extensão — recarregue a página.",
     dead: "Extensão não respondeu — recarregue a página.",
   };
-  return msgs[res && res.error] || "Falha ao enviar vaga.";
+  let base = msgs[res && res.error] || "Falha ao enviar vaga.";
+  if (res && (res.error === "network" || res.error === "timeout") && res.detail) {
+    base += ` [${res.detail}]`;
+  } else if (res && res.status) {
+    base += ` [HTTP ${res.status}]`;
+  }
+  return base;
 }
 
 async function handleSend(job, btn) {

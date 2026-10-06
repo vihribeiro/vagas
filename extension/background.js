@@ -76,12 +76,12 @@ async function sendJob(job) {
     });
   } catch (err) {
     if (err && err.name === "AbortError") return { ok: false, error: "timeout" };
-    return { ok: false, error: "network" };
+    return { ok: false, error: "network", detail: String((err && err.message) || err) };
   } finally {
     clearTimeout(timer);
   }
-  if (res.status === 401 || res.status === 403) return { ok: false, error: "unauthorized" };
-  if (!res.ok) return { ok: false, error: `http_${res.status}` };
+  if (res.status === 401 || res.status === 403) return { ok: false, error: "unauthorized", status: res.status };
+  if (!res.ok) return { ok: false, error: `http_${res.status}`, status: res.status };
 
   let body = null;
   try { body = await res.json(); } catch (err) { /* resposta sem corpo */ }
@@ -90,6 +90,30 @@ async function sendJob(job) {
     inserted: Number(body?.inserted) || 0,
     skipped: Number(body?.skipped) || 0,
   };
+}
+
+/* Testa o MESMO POST que o "+" usa, mas com lista vazia — não insere nada.
+   Serve para separar "problema no pedido" de "problema na página/extração". */
+async function testSend() {
+  const s = await getSettings();
+  if (!s.apiUrl) return { ok: false, error: "no_url" };
+  if (!s.apiKey) return { ok: false, error: "no_key" };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(`${s.apiUrl}/api/v1/jobs:bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": s.apiKey },
+      body: JSON.stringify({ jobs: [] }),
+      signal: ctrl.signal,
+    });
+    return { ok: res.ok, status: res.status };
+  } catch (err) {
+    if (err && err.name === "AbortError") return { ok: false, error: "timeout" };
+    return { ok: false, error: "network", detail: String((err && err.message) || err) };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function testConnection() {
@@ -102,7 +126,7 @@ async function testConnection() {
     });
     return { ok: res.ok, status: res.status };
   } catch (err) {
-    return { ok: false, error: "network" };
+    return { ok: false, error: "network", detail: String((err && err.message) || err) };
   }
 }
 
@@ -124,6 +148,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         return;
       case "TEST_CONNECTION":
         sendResponse(await testConnection());
+        return;
+      case "TEST_SEND":
+        sendResponse(await testSend());
         return;
       default:
         sendResponse({ ok: false, error: "unknown" });

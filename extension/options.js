@@ -60,9 +60,28 @@ $("#test").addEventListener("click", async () => {
   if (res.ok && res.status === 200) status("Tudo certo: servidor e chave válidos.");
   else if (res.error === "no_key") status("Falta a chave de API.", false);
   else if (res.error === "no_url") status("Falta a URL do servidor.", false);
-  else if (res.error === "network") status("Sem conexão com o servidor.", false);
+  else if (res.error === "network") status(`Sem conexão com o servidor [${res.detail || ""}].`, false);
   else if (res.status === 401 || res.status === 403) status("Chave inválida (401/403).", false);
   else status(`Servidor respondeu ${res.status} — confira a URL.`, false);
+});
+
+/* Testa o mesmo POST que o "+" usa (lista de vagas vazia — não insere nada).
+   Se o GET passar e o POST falhar aqui, o problema é do servidor/contexto. */
+$("#testSend").addEventListener("click", async () => {
+  await save();
+  status("Testando envio…");
+  const res = await new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "TEST_SEND" }, (r) =>
+      resolve(r || { ok: false, error: "empty" })
+    );
+  });
+  if (res.ok) status(`POST ok (HTTP ${res.status}) — o envio do + deve funcionar.`);
+  else if (res.error === "no_key") status("Falta a chave de API.", false);
+  else if (res.error === "no_url") status("Falta a URL do servidor.", false);
+  else if (res.error === "network") status(`Sem conexão no POST [${res.detail || ""}].`, false);
+  else if (res.error === "timeout") status("POST não respondeu em 15s.", false);
+  else if (res.status === 401 || res.status === 403) status("Chave inválida (401/403).", false);
+  else status(`POST respondeu HTTP ${res.status}.`, false);
 });
 
 load();
