@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -343,6 +344,15 @@ app.add_middleware(
     secret_key=SECRET_KEY,
     same_site="lax",
     https_only=False,  # atrás de Cloudflare/VPS com HTTPS próprio
+)
+# CORS aberto para a extensão do Chrome (e produções) — a autenticação é por
+# X-API-Key no header, então liberar o origin não abre nada sem a chave.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")

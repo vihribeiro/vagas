@@ -265,7 +265,7 @@ function errorText(res) {
   const msgs = {
     no_key: "Falta a chave de API — abra as Opções da extensão.",
     unauthorized: "Chave inválida (401/403) — confira nas Opções.",
-    network: "Sem conexão com o painel — servidor fora ou URL errada.",
+    network: "Sem conexão com o painel — se URL e chave estão certas, rode o deploy do app (CORS) no servidor.",
     timeout: "O servidor não respondeu — confira a URL nas Opções.",
     no_title: "Não consegui ler esta vaga.",
     empty: "Resposta vazia da extensão — recarregue a página.",
