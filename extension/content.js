@@ -111,8 +111,12 @@ function extractCard(card) {
     "a.job-card-list__title",
     "a.job-card-container__link",
     ".job-card-list__title",
+    ".job-card-container__link",
     "h3.base-search-card__title",
+    "[data-tracking-control-name*='job-card']",
     "h3",
+    "h2",
+    "h4",
     "strong",
   ]);
   let company = firstText(card, [
@@ -121,12 +125,14 @@ function extractCard(card) {
     ".base-search-card__subtitle",
     ".job-search-card__subtitle",
     ".job-card-container__company-name",
+    "a[data-tracking-control-name*='company']",
   ]);
   let location = firstText(card, [
     ".job-card-container__metadata-item",
     ".base-search-card__metadata",
     ".job-search-card__location",
     ".artdeco-entity-lockup__caption",
+    ".job-card-container__metadata-wrapper",
   ]);
   let href = jobHref(card);
 
@@ -135,8 +141,13 @@ function extractCard(card) {
   if (!title) {
     const link = card.querySelector('a[href*="/jobs/view/"]');
     title = link
-      ? u(link.getAttribute("aria-label")) || u(link.textContent)
+      ? u(link.getAttribute("aria-label")) || u(link.textContent) || u(link.title)
       : "";
+  }
+  if (!title) {
+    // Diagnóstico: o layout mudou a ponto de não achar o título.
+    // eslint-disable-next-line no-console
+    console.log("[vagas-bridge] card não lido — estrutura da página:", card.outerHTML.slice(0, 1500));
   }
   if (company === "" || location === "") {
     const lines = (card.innerText || "")
@@ -205,18 +216,15 @@ function containerForJobLink(anchor) {
 
 function findCards() {
   for (const sel of CARD_SELECTORS) {
-    const found = [...document.querySelectorAll(sel)].filter(
-      (c) =>
-        !c.closest("[data-ve-card]") &&
-        c.querySelector('a[href*="/jobs/"]')
-    );
-    if (found.length) return found;
+    const all = [...document.querySelectorAll(sel)];
+    if (!all.length) continue;
+    const props = all.filter((c) => c.querySelector('a[href*="/jobs/"]'));
+    if (props.length) return props;
   }
   // Fallback: qualquer âncora de vaga /jobs/view/{id} → contêiner pai
   const seen = new Set();
   const out = [];
   for (const a of document.querySelectorAll('a[href*="/jobs/view/"]')) {
-    if (a.closest("[data-ve-card]")) continue;
     const box = containerForJobLink(a);
     if (!box || seen.has(box)) continue;
     seen.add(box);
@@ -243,7 +251,7 @@ function placeCardButtons() {
       ev.stopPropagation();
       const job = extractCard(card);
       if (!job) {
-        toast("Não consegui ler este card — o layout do LinkedIn mudou?");
+        toast("Não consegui ler este card — abra o console (F12) e me mande o log.");
         setState(btn, { ok: false, error: "no_title" });
         return;
       }
@@ -296,7 +304,9 @@ function placeDetailButton() {
 }
 
 /* ------------------------------------------------- contador de diagnóstico */
+let pillHidden = false;
 function placePill({ cards, detail }) {
+  if (pillHidden) return;
   if (!pill) {
     pill = document.createElement("div");
     pill.className = "ve-pill";
@@ -304,10 +314,11 @@ function placePill({ cards, detail }) {
     label.className = "ve-label";
     const hide = document.createElement("button");
     hide.textContent = "×";
-    hide.title = "Ocultar (volta ao recarregar)";
+    hide.title = "Ocultar até recarregar a página";
     hide.addEventListener("click", () => {
       pill.remove();
       pill = null;
+      pillHidden = true;
     });
     pill.append(label, hide);
     document.body.appendChild(pill);
