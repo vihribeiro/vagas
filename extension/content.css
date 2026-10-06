@@ -1,0 +1,130 @@
+/* Estilos do content script — carregados pelo manifest (content_scripts.css),
+   então não sofrem com o CSP da página do LinkedIn. */
+
+.ve-btn {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  z-index: 99 !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(10, 102, 194, 0.92) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
+  color: #fff !important;
+  font: 700 15px/1 system-ui, sans-serif !important;
+  cursor: pointer !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.15s ease !important;
+}
+.ve-btn:hover,
+.ve-btn:focus-visible {
+  opacity: 1 !important;
+}
+.ve-btn[data-state="ok"] {
+  background: #2e7d32 !important;
+  opacity: 1 !important;
+}
+.ve-btn[data-state="dup"] {
+  background: #b26a00 !important;
+  opacity: 1 !important;
+}
+.ve-btn[data-state="err"] {
+  background: #c62828 !important;
+  opacity: 1 !important;
+}
+
+.ve-detail {
+  position: fixed !important;
+  right: 18px !important;
+  bottom: 18px !important;
+  z-index: 2147483000 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px 14px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #0a66c2 !important;
+  color: #fff !important;
+  font: 600 13px/1 system-ui, sans-serif !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+  cursor: pointer !important;
+}
+.ve-detail[data-state="ok"] {
+  background: #2e7d32 !important;
+}
+.ve-detail[data-state="dup"] {
+  background: #b26a00 !important;
+}
+.ve-detail[data-state="err"] {
+  background: #c62828 !important;
+}
+
+.ve-fill {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-left: 10px !important;
+  padding: 6px 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.3) !important;
+  border-radius: 999px !important;
+  background: #f5f5f5 !important;
+  color: #111 !important;
+  font: 600 12px/1 system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+
+/* contador de diagnóstico — canto inferior esquerdo, discreto */
+.ve-pill {
+  position: fixed !important;
+  left: 12px !important;
+  bottom: 12px !important;
+  z-index: 2147483000 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  max-width: 320px !important;
+  padding: 7px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(17, 24, 39, 0.85) !important;
+  color: #fff !important;
+  font: 500 12px/1.2 system-ui, sans-serif !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+  pointer-events: auto !important;
+}
+.ve-pill.warn {
+  background: rgba(178, 106, 0, 0.92) !important;
+}
+.ve-pill button {
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 3px 8px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  font: 600 11px/1 system-ui, sans-serif !important;
+  cursor: pointer !important;
+}
+
+.ve-toast {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 24px !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483001 !important;
+  padding: 9px 16px !important;
+  border-radius: 8px !important;
+  background: #111 !important;
+  color: #fff !important;
+  font: 500 13px/1 system-ui, sans-serif !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease !important;
+  pointer-events: none !important;
+}

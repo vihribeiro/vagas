@@ -104,7 +104,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     switch (msg && msg.type) {
       case "GET_SETUP": {
         const [settings, template] = await Promise.all([getSettings(), getTemplate()]);
-        sendResponse({ source: settings.source, defaultRadio: settings.defaultRadio, template });
+        sendResponse({
+          source: settings.source,
+          defaultRadio: settings.defaultRadio,
+          template,
+          configured: !!settings.apiKey,
+        });
         return;
       }
       case "SEND_JOB":

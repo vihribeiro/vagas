@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Vagas — LinkedIn bridge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Envia vagas selecionadas do LinkedIn para o painel de vagas e preenche os formulários do Easy Apply para você revisar antes de enviar.",
   "permissions": ["storage"],
   "host_permissions": [
@@ -19,6 +19,7 @@
         "https://www.linkedin.com/jobs",
         "https://www.linkedin.com/jobs/*"
       ],
+      "css": ["content.css"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

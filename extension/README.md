@@ -35,6 +35,27 @@ sem reler nada que não seja a página de vagas que você já está vendo.
 
 Depois é só navegar em `https://www.linkedin.com/jobs/` e usar os botões ﹢.
 
+## Não aparece nada na página de jobs? (diagnóstico)
+
+A extensão coloca um **contador discreto no canto inferior esquerdo** de qualquer
+página `/jobs` — ele é a prova de que a extensão está rodando e mostra o que ela
+detectou. Seguindo a ordem:
+
+1. **Recarregue a aba do LinkedIn** (F5). Extensões só rodam em páginas abertas
+   *depois* de instaladas — se a aba de jobs já estava aberta quando você
+   carregou a extensão, ela não estava ativa.
+2. Confirme o acesso ao site: em `chrome://extensions` → **Vagas — LinkedIn
+   bridge** → **Acesso ao site** deve estar em *"Em todos os sites"* (ou ao
+   menos *"Em linkedin.com"*). Se estiver *"Ao clicar"*, os scripts não rodam.
+3. Abra uma **busca** de vagas (`linkedin.com/jobs/search?...`), não só a home
+   de jobs. O botão ﹢ vive nos cards da lista de resultados.
+4. Ainda sem o contador? Abra as **Opções** e clique em **Testar conexão** — se
+   a URL/chave estiverem erradas ele avisa.
+5. O contador diz *"Nenhum card detectado"*? Então o LinkedIn trocou a
+   estrutura da página — o botão de envio continua disponível na página de
+   **detalhe da vaga** (botão flutuante "＋ Enviar pra vagas"), e me avise com
+   esse texto que eu ajusto os seletores.
+
 ## Notas honestas
 
 - **O LinkedIn muda a estrutura da página com frequência.** Os seletores têm

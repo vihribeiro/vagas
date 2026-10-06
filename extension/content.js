@@ -6,88 +6,20 @@
  * 3) Autopreenche os formulários do Easy Apply com as respostas do modelo
  *    (opções da extensão). NUNCA envia a candidatura: o clique final é seu.
  *
- * O LinkedIn muda os seletores com frequência — tudo aqui é com fallback e
- * idempotente, pensado para sobreviver a trocas de classe sem quebrar.
+ * O LinkedIn muda os seletores com frequência — aqui tudo tem fallback:
+ * se as classes conhecidas não existirem, a extensão detecta qualquer âncora
+ * /jobs/view/{id} e usa o contêiner dela como card. Um contador ("pill")
+ * no canto inferior esquerdo mostra o que a extensão encontrou na página.
  */
 "use strict";
 
-const STYLE = `
-  .ve-btn {
-    position: absolute !important;
-    top: 6px !important;
-    right: 6px !important;
-    z-index: 99 !important;
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: grid !important;
-    place-items: center !important;
-    border: 0 !important;
-    border-radius: 50% !important;
-    background: rgba(10, 102, 194, .92) !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,.3) !important;
-    color: #fff !important;
-    font: 700 15px/1 system-ui, sans-serif !important;
-    cursor: pointer !important;
-    opacity: .25 !important;
-    transition: opacity .15s ease !important;
-  }
-  .ve-btn:hover, .ve-btn:focus-visible { opacity: 1 !important; }
-  .ve-btn[data-state="ok"] { background: #2e7d32 !important; opacity: 1 !important; }
-  .ve-btn[data-state="dup"] { background: #b26a00 !important; opacity: 1 !important; }
-  .ve-btn[data-state="err"] { background: #c62828 !important; opacity: 1 !important; }
-  .ve-detail {
-    position: fixed !important;
-    right: 18px !important;
-    bottom: 18px !important;
-    z-index: 2147483000 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding: 10px 14px !important;
-    border: 0 !important;
-    border-radius: 999px !important;
-    background: #0a66c2 !important;
-    color: #fff !important;
-    font: 600 13px/1 system-ui, sans-serif !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,.25) !important;
-    cursor: pointer !important;
-  }
-  .ve-detail[data-state="ok"] { background: #2e7d32 !important; }
-  .ve-detail[data-state="dup"] { background: #b26a00 !important; }
-  .ve-detail[data-state="err"] { background: #c62828 !important; }
-  .ve-fill {
-    display: inline-flex !important;
-    align-items: center !important;
-    margin-left: 10px !important;
-    padding: 6px 12px !important;
-    border: 1px solid rgba(0,0,0,.3) !important;
-    border-radius: 999px !important;
-    background: #f5f5f5 !important;
-    color: #111 !important;
-    font: 600 12px/1 system-ui, sans-serif !important;
-    cursor: pointer !important;
-  }
-  .ve-toast {
-    position: fixed !important;
-    left: 50% !important;
-    bottom: 24px !important;
-    transform: translateX(-50%) !important;
-    z-index: 2147483001 !important;
-    padding: 9px 16px !important;
-    border-radius: 8px !important;
-    background: #111 !important;
-    color: #fff !important;
-    font: 500 13px/1 system-ui, sans-serif !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,.3) !important;
-    opacity: 0 !important;
-    transition: opacity .2s ease !important;
-    pointer-events: none !important;
-  }
-`;
+/* ------------------------------------------------------------------ estado */
+let template = [];
+let defaultRadio = "none";
+let setup = { configured: false };
+const autofilled = new WeakSet();
+let pill = null;
+let loopTimer = null;
 
 /* ---------------------------------------------------------------- utilidades */
 function u(t) {
@@ -95,14 +27,6 @@ function u(t) {
 }
 function normalize(s) {
   return u(s).toLowerCase();
-}
-
-function injectStyle() {
-  if (document.getElementById("ve-style")) return;
-  const s = document.createElement("style");
-  s.id = "ve-style";
-  s.textContent = STYLE;
-  (document.head || document.documentElement).appendChild(s);
 }
 
 function sendMessage(msg) {
@@ -171,9 +95,10 @@ function firstText(root, sels) {
   return "";
 }
 
-function cardLink(root) {
-  const a = root.querySelector('a[href*="/jobs/view/"]') ||
-            root.querySelector('a[href*="/jobs/"]');
+function jobHref(card) {
+  const a =
+    card.querySelector('a[href*="/jobs/view/"]') ||
+    card.querySelector('a[href*="/jobs/"]');
   if (!a) return "";
   let href = a.getAttribute("href") || "";
   if (href.startsWith("//")) href = "https:" + href;
@@ -188,27 +113,47 @@ function extractCard(card) {
     ".job-card-list__title",
     "h3.base-search-card__title",
     "h3",
+    "strong",
   ]);
-  const company = firstText(card, [
+  let company = firstText(card, [
     ".job-card-container__primary-description",
     ".artdeco-entity-lockup__subtitle",
     ".base-search-card__subtitle",
     ".job-search-card__subtitle",
     ".job-card-container__company-name",
   ]);
-  const location = firstText(card, [
+  let location = firstText(card, [
     ".job-card-container__metadata-item",
     ".base-search-card__metadata",
     ".job-search-card__location",
     ".artdeco-entity-lockup__caption",
   ]);
+  let href = jobHref(card);
+
+  // Fallback genérico: título sai do rótulo/texto do link da vaga, e empresa/
+  // local saem das linhas do texto do card (layout novo que muda as classes).
+  if (!title) {
+    const link = card.querySelector('a[href*="/jobs/view/"]');
+    title = link
+      ? u(link.getAttribute("aria-label")) || u(link.textContent)
+      : "";
+  }
+  if (company === "" || location === "") {
+    const lines = (card.innerText || "")
+      .split("\n")
+      .map(u)
+      .filter(Boolean)
+      .filter((l) => l !== title);
+    if (company === "" && lines.length) company = lines[0];
+    if (location === "") {
+      location =
+        lines.find((l) => /[·,•]|\d/.test(l) && l !== company) ||
+        (lines.length > 1 ? lines[1] : "") ||
+        "";
+    }
+  }
   if (!title) return null;
-  return {
-    title,
-    company,
-    location,
-    source_url: cardLink(card),
-  };
+  return { title, company, location, source_url: href };
 }
 
 function extractDetail() {
@@ -221,10 +166,12 @@ function extractDetail() {
     ".job-details-jobs-unified-top-card__company-name",
     ".jobs-unified-top-card__company-name",
     ".artdeco-entity-lockup__subtitle",
+    "a[data-tracking-control-name*='company']",
   ]);
   const location = firstText(document, [
     ".job-details-jobs-unified-top-card__tertiary-description-container",
     ".jobs-unified-top-card__tertiary-description-container",
+    ".job-details-jobs-unified-top-card__metadata",
   ]);
   return {
     title,
@@ -238,22 +185,49 @@ function extractDetail() {
 const CARD_SELECTORS = [
   "li.jobs-search-results__list-item",
   "li[data-occludable-job-id]",
+  ".scaffold-layout__list-item",
   ".job-card-container",
+  ".jobs-search-results__card",
+  ".jobs-search-card",
 ];
+
+/* Sobe até o menor ancestral que contém exatamente esta âncora de vaga. */
+function containerForJobLink(anchor) {
+  let c = anchor;
+  for (let i = 0; i < 5; i++) {
+    const p = c.parentElement;
+    if (!p || p === document.body || p === document.documentElement) return null;
+    if (p.querySelectorAll('a[href*="/jobs/view/"]').length === 1) return p;
+    c = p;
+  }
+  return null;
+}
 
 function findCards() {
   for (const sel of CARD_SELECTORS) {
-    const all = document.querySelectorAll(sel);
-    const cards = [...all].filter((c) => !c.closest("[data-ve-card]"));
-    if (cards.length) return cards;
+    const found = [...document.querySelectorAll(sel)].filter(
+      (c) =>
+        !c.closest("[data-ve-card]") &&
+        c.querySelector('a[href*="/jobs/"]')
+    );
+    if (found.length) return found;
   }
-  return [];
+  // Fallback: qualquer âncora de vaga /jobs/view/{id} → contêiner pai
+  const seen = new Set();
+  const out = [];
+  for (const a of document.querySelectorAll('a[href*="/jobs/view/"]')) {
+    if (a.closest("[data-ve-card]")) continue;
+    const box = containerForJobLink(a);
+    if (!box || seen.has(box)) continue;
+    seen.add(box);
+    out.push(box);
+  }
+  return out;
 }
 
-async function placeCardButtons() {
+function placeCardButtons() {
   for (const card of findCards()) {
     if (card.hasAttribute("data-ve-card")) continue;
-    if (!card.querySelector('a[href*="/jobs/"]')) continue; // só cards de vaga
     card.setAttribute("data-ve-card", "1");
     card.style.position = "relative"; // ancora o botão no canto superior
 
@@ -321,11 +295,37 @@ function placeDetailButton() {
   document.body.appendChild(btn);
 }
 
-/* -------------------------------------------------------- autofill (Easy Apply) */
-let template = [];
-let defaultRadio = "none";
-const autofilled = new WeakSet();
+/* ------------------------------------------------- contador de diagnóstico */
+function placePill({ cards, detail }) {
+  if (!pill) {
+    pill = document.createElement("div");
+    pill.className = "ve-pill";
+    const label = document.createElement("span");
+    label.className = "ve-label";
+    const hide = document.createElement("button");
+    hide.textContent = "×";
+    hide.title = "Ocultar (volta ao recarregar)";
+    hide.addEventListener("click", () => {
+      pill.remove();
+      pill = null;
+    });
+    pill.append(label, hide);
+    document.body.appendChild(pill);
+  }
+  let msg;
+  if (detail) {
+    msg = "Página de vaga — botão “＋ Enviar pra vagas” no canto inferior direito";
+  } else if (cards > 0) {
+    msg = `${cards} card(s) — clique em ﹢ para enviar pro painel`;
+  } else {
+    msg = "Nenhum card detectado nesta página";
+  }
+  if (!setup.configured) msg += "  ·  ⚠ chave de API não configurada";
+  pill.className = "ve-pill" + ((!detail && cards === 0) ? " warn" : "");
+  pill.querySelector(".ve-label").textContent = msg;
+}
 
+/* -------------------------------------------------------- autofill (Easy Apply) */
 function parseTemplate(entries) {
   return (entries || [])
     .map((e) => ({
@@ -443,9 +443,7 @@ function fillForm(scope) {
     if (!answer) continue;
     const want = wantBool(answer);
     if (want === null) continue;
-    // escolhe o radio cujo texto bate com a resposta (sim/não); padrão: 1º radio
-    const target =
-      g.radios.find((r) => wantBool(labelOf(r)) === want) || g.radios[0];
+    const target = g.radios.find((r) => wantBool(labelOf(r)) === want) || g.radios[0];
     if (target && !target.checked) {
       target.click();
       filled += 1;
@@ -487,13 +485,14 @@ function autoFillOnce(modal) {
 }
 
 /* ------------------------------------------------------------------- loop */
-let loopTimer = null;
 function schedule() {
   if (loopTimer) return;
   loopTimer = setTimeout(() => {
     loopTimer = null;
+    const detail = isDetailPage();
     placeCardButtons();
     placeDetailButton();
+    placePill({ cards: findCards().length, detail });
     const modal = document.querySelector(
       "#jobs-easy-apply-modal, .jobs-easy-apply-modal, .jobs-easy-apply-form"
     );
@@ -504,10 +503,11 @@ function schedule() {
   }, 350);
 }
 
-injectStyle();
+/* ------------------------------------------------------------------- init */
 sendMessage({ type: "GET_SETUP" }).then((r) => {
   if (r && r.template) template = parseTemplate(r.template);
   defaultRadio = r && r.defaultRadio ? r.defaultRadio : "none";
+  setup.configured = !!(r && r.configured);
 });
 
 const mo = new MutationObserver(schedule);
