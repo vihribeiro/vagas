@@ -163,10 +163,6 @@
       swipe_reg_fail: "Não consegui registrar — confira a conexão",
       swipe_undo_fail: "Não consegui desfazer — confira a conexão",
 
-      // tema
-      theme_light: "Ativar tema claro",
-      theme_dark: "Ativar tema escuro",
-
       // acessibilidade (fonte e paleta)
       font_dyslexic_on: "Ativar fonte para dislexia",
       font_dyslexic_off: "Desativar fonte para dislexia",
@@ -326,9 +322,6 @@
       swipe_view_list: "View list",
       swipe_reg_fail: "Couldn't register — check your connection",
       swipe_undo_fail: "Couldn't undo — check your connection",
-
-      theme_light: "Switch to light theme",
-      theme_dark: "Switch to dark theme",
 
       font_dyslexic_on: "Enable dyslexia font",
       font_dyslexic_off: "Disable dyslexia font",

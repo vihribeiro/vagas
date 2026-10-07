@@ -1,6 +1,8 @@
 /* Preferências de interface: fonte para dislexia (botão "Aa") e paleta de
    cor — 3 combinações para o tema claro e 3 para o escuro (popover no botão
-   de paleta da topbar). Cada modo lembra a própria escolha. Roda no <head>,
+   de paleta da topbar). Escolher uma paleta também escolhe o modo (grupo
+   Escuro liga o tema escuro, grupo Claro liga o claro) — o botão sol/lua
+   não existe mais. Cada modo lembra a própria escolha. Roda no <head>,
    depois do theme.js, para os atributos estarem no <html> antes do primeiro
    pintar; monta e liga os botões quando o DOM estiver pronto. Tudo
    persistido no localStorage, como o tema e o idioma. */
@@ -159,6 +161,10 @@
       opt.addEventListener("click", function () {
         var mode = this.dataset.paletteMode;
         write(mode === "dark" ? DARK_PALETTE_KEY : LIGHT_PALETTE_KEY, this.dataset.paletteOpt);
+        // escolher a paleta também escolhe o modo: o grupo Escuro liga o
+        // tema escuro, o grupo Claro liga o claro (substitui o botão
+        // sol/lua que saiu da topbar).
+        if (window.VagasTheme && VagasTheme.set) VagasTheme.set(mode);
         applyPalette();
         closePop();
       });
