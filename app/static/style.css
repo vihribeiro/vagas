@@ -246,6 +246,92 @@
   --accent: #94d1e4;
 }
 
+/* ------------------------------------------------- paletas do tema escuro
+   Mesma ideia das claras: 3 combinações que mudam fundo, cards e tintas —
+   mas só existem com o tema escuro. Usam :is(...) para valer tanto no modo
+   manual (:root[data-theme="dark"]) quanto no automático (sem atributo, via
+   prefers-color-scheme), e vêm depois do bloco escuro base de propósito para
+   vencer por ordem de declaração. O prefs.js só liga data-palette=*escuro no
+   tema escuro, então nunca vazam para a versão clara.
+
+   Paleta Creme-escuro é o próprio :root acima: não precisa de bloco.
+
+   Paleta Noite — escuro azulado, calmo, leitura noturna (o espelho da Gelo). */
+:root[data-palette="noite"]:is([data-theme="dark"], :not([data-theme="light"])) {
+  --bg: #12151c;
+  --bg-sunk: #1a1e28;
+  --field-bg: #0e1016;
+  --text: #f0f3f8;
+  --text-soft: #b6bdc9;
+  --text-faint: #9aa2b0;
+  --ink: #07080c;
+
+  --on-tone: #f0f3f8;
+  --on-ink: #e8ecf4;
+  --on-field: #f0f3f8;
+
+  --ok-text: #86d6b8;
+  --err-text: #f2a4b3;
+
+  --c-pending: #1b5874;
+  --c-applied: #25624c;
+  --c-rejected: #a52341;
+  --c-dismissed: #78601e;
+
+  --c-bebee: #785403;
+  --c-indeed: #235d80;
+  --c-glassdoor: #336330;
+  --c-linkedin: #1f5c89;
+  --c-other: #5f5850;
+
+  --c-remotar: #664f82;
+  --c-frontendbr: #7f485d;
+  --c-nomades: #376452;
+  --c-solides: #6f563b;
+  --c-greenhouse: #4d623c;
+
+  --accent: #9cc7ea;
+}
+
+/* Paleta Carvão — quase preto com tinta branca: máximo contraste do escuro.
+   Os cards das vagas ficam transparentes, como no Vidro do claro (os
+   ajustes de card estão no fim do arquivo). */
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) {
+  --bg: #0b0b0d;
+  --bg-sunk: #151518;
+  --field-bg: #08080a;
+  --text: #ffffff;
+  --text-soft: #c2c2c6;
+  --text-faint: #a6a6ad;
+  --ink: #000000;
+
+  --on-tone: #ffffff;
+  --on-ink: #f0f0f2;
+  --on-field: #ffffff;
+
+  --ok-text: #8fdfc0;
+  --err-text: #f5adb9;
+
+  --c-pending: #17566c;
+  --c-applied: #205f47;
+  --c-rejected: #9d213d;
+  --c-dismissed: #715b1b;
+
+  --c-bebee: #715003;
+  --c-indeed: #1f5678;
+  --c-glassdoor: #2c5c2a;
+  --c-linkedin: #1b5480;
+  --c-other: #5a5449;
+
+  --c-remotar: #5f4a7a;
+  --c-frontendbr: #774456;
+  --c-nomades: #325d4d;
+  --c-solides: #695037;
+  --c-greenhouse: #485c38;
+
+  --accent: #a5c9f0;
+}
+
 /* Versão lavada de cada pastel, misturada em direção ao fundo. Definida uma
    vez só: como a referência a --bg é resolvida no uso, cada tema pega o seu
    fundo automaticamente. */
@@ -419,6 +505,16 @@ a { color: var(--accent); }
   .palette-opt:hover { background: var(--bg-sunk); color: var(--text); }
 }
 
+/* rótulo de seção do popover: separa as paletas do claro das do escuro */
+.palette-label {
+  padding: 8px 9px 4px;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
 /* amostra da combinação: metade cor dos cards, metade fundo do site (o
    Vidro, sem cor de card, mostra o xadrez de "transparente"). */
 .palette-dot {
@@ -432,14 +528,12 @@ a { color: var(--accent); }
 .sw-creme { background: linear-gradient(135deg, #94d1e4 0 50%, #f4f1ec 50% 100%); }
 .sw-gelo { background: linear-gradient(135deg, #9cc7ea 0 50%, #eef1f6 50% 100%); }
 .sw-vidro { background: repeating-conic-gradient(#dcd9d2 0 25%, #f9f9f7 0 50%) 0 0 / 9px 9px; }
+.sw-escuro { background: linear-gradient(135deg, #1e6277 0 50%, #17161b 50% 100%); }
+.sw-noite { background: linear-gradient(135deg, #1b5874 0 50%, #12151c 50% 100%); }
+.sw-carvao { background: repeating-conic-gradient(#1c1c20 0 25%, #0b0b0d 0 50%) 0 0 / 9px 9px; }
 
-/* a paleta é um ajuste da versão clara: no escuro o botão some (e o
-   prefs.js tira o data-palette do <html>). */
-:root[data-theme="dark"] .palette-wrap { display: none; }
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .palette-wrap { display: none; }
-}
+/* o seletor de paleta vale nos dois modos: cada um tem as suas 3
+   combinações, e as escuras só ligam com o tema escuro (ver blocos acima). */
 
 .lang-btn {
   border: 0;
@@ -2086,4 +2180,35 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
 
 @media (prefers-reduced-motion: reduce) {
   :root[data-palette="vidro"] .job-item:hover { transform: none; }
+}
+
+/* ================================================================ paleta Carvão
+   O espelho escuro do Vidro: card das vagas transparente com a sombra dura.
+   Mesma estratégia do Vidro (especificidade alta + fim do arquivo) para
+   vencer as regras de status e os :hover/:active. */
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .job-item {
+  --surf: var(--bg);
+  background: transparent;
+  box-shadow: var(--hard);
+}
+
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .job-item:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .job-item:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .swipe-card {
+  --surf: var(--bg);
+  background: transparent;
+}
+
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .swipe-card-behind { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .job-item:hover { transform: none; }
 }

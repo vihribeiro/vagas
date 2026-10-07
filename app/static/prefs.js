@@ -1,15 +1,20 @@
 /* Preferências de interface: fonte para dislexia (botão "Aa") e paleta de
-   cor da versão clara (popover com as 3 combinações no botão de paleta).
-   Roda no <head>, depois do theme.js, para os atributos estarem no <html>
-   antes do primeiro pintar; monta e liga os botões quando o DOM estiver
-   pronto. Tudo persistido no localStorage, como o tema e o idioma. */
+   cor — 3 combinações para o tema claro e 3 para o escuro (popover no botão
+   de paleta da topbar). Cada modo lembra a própria escolha. Roda no <head>,
+   depois do theme.js, para os atributos estarem no <html> antes do primeiro
+   pintar; monta e liga os botões quando o DOM estiver pronto. Tudo
+   persistido no localStorage, como o tema e o idioma. */
 (function () {
   var FONT_KEY = "vagas-font";
-  var PALETTE_KEY = "vagas-palette";
-  var PALETTES = ["creme", "gelo", "vidro"];
+  var OLD_PALETTE_KEY = "vagas-palette";
+  var LIGHT_PALETTE_KEY = "vagas-palette-light";
+  var DARK_PALETTE_KEY = "vagas-palette-dark";
+  var LIGHT_PALETTES = ["creme", "gelo", "vidro"];
+  var DARK_PALETTES = ["escuro", "noite", "carvao"];
   /* fundo de cada paleta — acompanha o --bg do style.css, só para o
      <meta theme-color> do navegador não ficar com a cor errada */
-  var PALETTE_BG = { creme: "#f4f1ec", gelo: "#eef1f6", vidro: "#f9f9f7" };
+  var LIGHT_BG = { creme: "#f4f1ec", gelo: "#eef1f6", vidro: "#f9f9f7" };
+  var DARK_BG = { escuro: "#17161b", noite: "#12151c", carvao: "#0b0b0d" };
   var mq = window.matchMedia("(prefers-color-scheme: dark)");
   // i18n.js carrega antes deste arquivo no <head>; o t() traduz os rótulos e
   // cai na chave crua se, por algum motivo, não estiver disponível.
@@ -21,6 +26,16 @@
 
   function write(key, value) {
     try { localStorage.setItem(key, value); } catch (e) {}
+  }
+
+  /* a versão antiga guardava UMA paleta (só do claro) na chave "vagas-palette";
+     migra para a chave do tema claro na primeira visita. */
+  function migratePalette() {
+    if (read(LIGHT_PALETTE_KEY) !== null) return;
+    var old = read(OLD_PALETTE_KEY);
+    if (!old) return;
+    write(LIGHT_PALETTE_KEY, old);
+    try { localStorage.removeItem(OLD_PALETTE_KEY); } catch (e) {}
   }
 
   /* ------------------------------------------------------------- fonte */
@@ -54,9 +69,11 @@
   }
 
   /* ------------------------------------------------------------- paleta */
-  function storedPalette() {
-    var p = read(PALETTE_KEY);
-    return PALETTES.indexOf(p) >= 0 ? p : "creme";
+  function storedPalette(dark) {
+    var key = dark ? DARK_PALETTE_KEY : LIGHT_PALETTE_KEY;
+    var list = dark ? DARK_PALETTES : LIGHT_PALETTES;
+    var p = read(key);
+    return list.indexOf(p) >= 0 ? p : (dark ? "escuro" : "creme");
   }
 
   function darkNow() {
@@ -67,17 +84,22 @@
   }
 
   function applyPalette() {
-    var p = storedPalette();
+    var dark = darkNow();
+    var p = storedPalette(dark);
     var root = document.documentElement;
-    // a paleta é um ajuste da versão clara: no escuro o atributo some, e a
-    // escolha fica guardada para quando o tema claro voltar.
-    if (p !== "creme" && !darkNow()) root.setAttribute("data-palette", p);
-    else root.removeAttribute("data-palette");
+    // o atributo só marca a paleta "alternativa" de cada modo: os padrões
+    // (creme no claro, escuro no escuro) são o próprio CSS base e não
+    // precisam de marcação — assim as paletas escuras jamais vazam pro claro.
+    var plain = dark ? (p === "escuro") : (p === "creme");
+    if (plain) root.removeAttribute("data-palette");
+    else root.setAttribute("data-palette", p);
 
-    var meta = document.querySelector('meta[name="theme-color"][media*="prefers-color-scheme: light"]');
-    if (meta && PALETTE_BG[p]) meta.setAttribute("content", PALETTE_BG[p]);
+    var media = dark ? "dark" : "light";
+    var meta = document.querySelector('meta[name="theme-color"][media*="prefers-color-scheme: ' + media + '"]');
+    var color = (dark ? DARK_BG : LIGHT_BG)[p];
+    if (meta && color) meta.setAttribute("content", color);
 
-    paintPaletteButtons(p);
+    paintPaletteButtons(dark, p);
   }
 
   var PALETTE_ICON =
@@ -85,6 +107,15 @@
     '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>' +
     '<circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>' +
     '<path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>';
+
+  function optHTML(id, mode) {
+    return (
+      '<button type="button" class="palette-opt" data-palette-opt="' + id + '" data-palette-mode="' + mode +
+      '" aria-pressed="false">' +
+      '<span class="palette-dot sw-' + id + '" aria-hidden="true"></span>' +
+      "<span>" + t("palette_label_" + id) + "</span></button>"
+    );
+  }
 
   // o wrap já está nos templates (uma linha por página); o botão e o
   // popover são montados aqui para não triplicar o markup em 3 templates.
@@ -97,13 +128,14 @@
       var html =
         '<button type="button" class="icon-btn" data-palette-toggle aria-haspopup="true" aria-expanded="false"' +
         ' aria-label="' + t("palette_aria") + '" title="' + t("palette_aria") + '">' + PALETTE_ICON + "</button>" +
-        '<div class="palette-pop" data-palette-pop hidden>';
-      for (var j = 0; j < PALETTES.length; j++) {
-        var id = PALETTES[j];
-        html +=
-          '<button type="button" class="palette-opt" data-palette-opt="' + id + '" aria-pressed="false">' +
-          '<span class="palette-dot sw-' + id + '" aria-hidden="true"></span>' +
-          "<span>" + t("palette_label_" + id) + "</span></button>";
+        '<div class="palette-pop" data-palette-pop hidden>' +
+        '<div class="palette-label">' + t("palette_group_light") + "</div>";
+      for (var j = 0; j < LIGHT_PALETTES.length; j++) {
+        html += optHTML(LIGHT_PALETTES[j], "light");
+      }
+      html += '<div class="palette-label">' + t("palette_group_dark") + "</div>";
+      for (var k = 0; k < DARK_PALETTES.length; k++) {
+        html += optHTML(DARK_PALETTES[k], "dark");
       }
       host.innerHTML = html + "</div>";
     }
@@ -116,15 +148,17 @@
     for (var j = 0; j < togglers.length; j++) togglers[j].setAttribute("aria-expanded", "false");
   }
 
-  function paintPaletteButtons(current) {
+  function paintPaletteButtons(dark, current) {
     var opts = document.querySelectorAll("[data-palette-opt]");
     for (var i = 0; i < opts.length; i++) {
       var opt = opts[i];
-      opt.setAttribute("aria-pressed", opt.dataset.paletteOpt === current ? "true" : "false");
+      var selected = opt.dataset.paletteMode === (dark ? "dark" : "light") && opt.dataset.paletteOpt === current;
+      opt.setAttribute("aria-pressed", selected ? "true" : "false");
       if (opt.dataset.wired) continue;
       opt.dataset.wired = "1";
       opt.addEventListener("click", function () {
-        write(PALETTE_KEY, this.dataset.paletteOpt);
+        var mode = this.dataset.paletteMode;
+        write(mode === "dark" ? DARK_PALETTE_KEY : LIGHT_PALETTE_KEY, this.dataset.paletteOpt);
         applyPalette();
         closePop();
       });
@@ -158,11 +192,12 @@
   });
 
   /* ---------------------------------------------------------------- boot */
+  migratePalette();
   applyFont();
   applyPalette();
 
-  // trocar de tema (botão ou sistema) reavalia a paleta: ela só existe no
-  // claro, e o botão também some via CSS.
+  // trocar de tema (botão ou sistema) reavalia a paleta: cada modo tem a
+  // sua escolha, e o atributo acompanha o modo efetivo.
   if (window.MutationObserver) {
     new MutationObserver(applyPalette).observe(document.documentElement, {
       attributes: true,

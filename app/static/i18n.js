@@ -171,9 +171,14 @@
       font_dyslexic_on: "Ativar fonte para dislexia",
       font_dyslexic_off: "Desativar fonte para dislexia",
       palette_aria: "Esquema de cores",
+      palette_group_light: "Claro",
+      palette_group_dark: "Escuro",
       palette_label_creme: "Creme",
       palette_label_gelo: "Gelo",
       palette_label_vidro: "Vidro",
+      palette_label_escuro: "Escuro",
+      palette_label_noite: "Noite",
+      palette_label_carvao: "Carvão",
     },
 
     en: {
@@ -328,9 +333,14 @@
       font_dyslexic_on: "Enable dyslexia font",
       font_dyslexic_off: "Disable dyslexia font",
       palette_aria: "Color scheme",
+      palette_group_light: "Light",
+      palette_group_dark: "Dark",
       palette_label_creme: "Cream",
       palette_label_gelo: "Ice",
       palette_label_vidro: "Glass",
+      palette_label_escuro: "Dark",
+      palette_label_noite: "Night",
+      palette_label_carvao: "Charcoal",
     },
   };
 
