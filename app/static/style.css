@@ -3,6 +3,33 @@
    títulos em serifada. A cor do bloco carrega o status; o que já tem decisão
    tomada recua em saturação. Sem emoji. */
 
+/* ---------------------------------------------------------------- fontes
+   OpenDyslexic (OFL), carregada do jsDelivr. O navegador só baixa os
+   arquivos quando --sans/--serif apontam para ela, ou seja: só quando o
+   usuário liga a opção no botão "Aa" (data-font="dyslexic"). Sem rede ela
+   cai nas famílias da pilha de fallback. */
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/antijingoist/opendyslexic@master/compiled/OpenDyslexic-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/antijingoist/opendyslexic@master/compiled/OpenDyslexic-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/antijingoist/opendyslexic@master/compiled/OpenDyslexic-Italic.woff2") format("woff2");
+}
+
 /* ---------------------------------------------------------------- tokens
 
    --ink e a cor da sombra dura e da borda chapada. NAO e cor de texto:
@@ -65,6 +92,82 @@
 
   --tap: 44px;
   --page: 700px;
+}
+
+/* Opção de fonte para dislexia (botão "Aa" na topbar): troca as duas
+   famílias, corpo e títulos, pela OpenDyslexic. */
+:root[data-font="dyslexic"] {
+  --sans: "OpenDyslexic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --serif: "OpenDyslexic", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+}
+
+/* ---------------------------------------------------------------- paletas da versão clara
+   Três combinações que mudam o fundo do site, os cards das vagas e as tintas
+   de texto (a escolha fica no botão de paleta da topbar). A geometria e os
+   papéis de contraste são os mesmos da paleta Creme, que é o :root acima.
+
+   Ficam ANTES dos blocos do tema escuro de propósito: no escuro os tokens
+   escuros vencem por ordem de declaração — e o prefs.js ainda tira o
+   data-palette quando o tema efetivo é escuro, então a paleta nunca
+   sobrevive à versão escura.
+
+   Paleta Gelo — fundo cinza-azulado, tinta grafite, pastéis frios. */
+:root[data-palette="gelo"] {
+  --bg: #eef1f6;
+  --bg-sunk: #e1e7f0;
+  --field-bg: #ffffff;
+  --text: #14181f;
+  --text-soft: #4a5261;
+  --text-faint: #5e6672;
+  --ink: #14181f;
+
+  --on-tone: #14181f;
+  --on-ink: #eef1f6;
+  --on-field: #14181f;
+
+  --ok-text: #1d7a55;
+  --err-text: #c8234c;
+
+  --c-pending: #9cc7ea;
+  --c-applied: #93d6bd;
+  --c-rejected: #f2a2b5;
+  --c-dismissed: #f0d183;
+
+  --c-bebee: #f5c451;
+  --c-indeed: #86b8e0;
+  --c-glassdoor: #98cfae;
+  --c-linkedin: #63a4d8;
+  --c-other: #ccd2dc;
+
+  --c-remotar: #b8a4e6;
+  --c-frontendbr: #ee9dc0;
+  --c-nomades: #93d5c4;
+  --c-solides: #e6c9a8;
+  --c-greenhouse: #b3c99f;
+
+  --accent: #2a6f97;
+}
+
+/* Paleta Vidro — fundo quase branco e tinta escura; os pastéis ficam só nos
+   botões/pílulas, e o card da vaga vira transparente (regras no fim do
+   arquivo, junto com os outros ajustes de card). */
+:root[data-palette="vidro"] {
+  --bg: #f9f9f7;
+  --bg-sunk: #ecebe6;
+  --field-bg: #ffffff;
+  --text: #171512;
+  --text-soft: #524d46;
+  --text-faint: #67615a;
+  --ink: #111010;
+
+  --on-tone: #171512;
+  --on-ink: #f9f9f7;
+  --on-field: #171512;
+
+  --ok-text: #1f7355;
+  --err-text: #c62850;
+
+  --accent: #2e7492;
 }
 
 /* Tema escuro: os pastéis descem de valor para o texto claro ler em cima,
@@ -254,6 +357,89 @@ a { color: var(--accent); }
 }
 
 .icon-btn svg { width: 19px; height: 19px; display: block; }
+
+/* botão "Aa": fonte para dislexia. aria-pressed é a única pista de estado,
+   então ele ganha fundo quando está ligado. */
+.font-btn {
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.font-btn[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--bg-sunk);
+}
+
+/* seletor de paleta: um botão que abre um popover com as 3 combinações da
+   versão clara. O popover é montado pelo prefs.js dentro deste wrap. */
+.palette-wrap { position: relative; }
+
+.palette-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  min-width: 172px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--field-bg);
+  border: 1.5px solid var(--bg-sunk);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--hard-sm);
+}
+
+.palette-opt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 550;
+  color: var(--text-soft);
+  text-align: left;
+  cursor: pointer;
+}
+
+.palette-opt[aria-pressed="true"] {
+  background: var(--bg-sunk);
+  color: var(--text);
+  font-weight: 650;
+}
+
+@media (hover: hover) {
+  .palette-opt:hover { background: var(--bg-sunk); color: var(--text); }
+}
+
+/* amostra da combinação: metade cor dos cards, metade fundo do site (o
+   Vidro, sem cor de card, mostra o xadrez de "transparente"). */
+.palette-dot {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 45%, transparent);
+}
+
+.sw-creme { background: linear-gradient(135deg, #94d1e4 0 50%, #f4f1ec 50% 100%); }
+.sw-gelo { background: linear-gradient(135deg, #9cc7ea 0 50%, #eef1f6 50% 100%); }
+.sw-vidro { background: repeating-conic-gradient(#dcd9d2 0 25%, #f9f9f7 0 50%) 0 0 / 9px 9px; }
+
+/* a paleta é um ajuste da versão clara: no escuro o botão some (e o
+   prefs.js tira o data-palette do <html>). */
+:root[data-theme="dark"] .palette-wrap { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .palette-wrap { display: none; }
+}
 
 .lang-btn {
   border: 0;
@@ -927,9 +1113,36 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 }
 
 /* ---------------------------------------------------------------- util */
+@media (max-width: 430px) {
+  /* a topbar ganhou dois botões (Aa e paleta): no celular os itens apertam
+     para caber sem quebrar o alinhamento das abas sticky. */
+  .topbar { gap: 8px; }
+  .topbar h1 { font-size: 1.3rem; }
+  .topbar-actions { gap: 0; }
+  .topbar-actions .icon-btn { width: 32px; }
+  .topbar-actions .link,
+  .topbar-actions .lang-btn { padding-left: 7px; padding-right: 7px; font-size: .84rem; }
+
+  /* a OpenDyslexic é bem mais larga que a fonte do sistema: com ela ligada
+     a barra aperta mais um degrau para os 6 itens continuarem cabendo. */
+  :root[data-font="dyslexic"] .topbar h1 { font-size: 1rem; }
+  :root[data-font="dyslexic"] .topbar-actions .link,
+  :root[data-font="dyslexic"] .topbar-actions .lang-btn { padding-left: 5px; padding-right: 5px; font-size: .76rem; }
+  :root[data-font="dyslexic"] .topbar-actions .icon-btn { width: 30px; }
+}
+
 @media (max-width: 380px) {
   .container { padding-left: 12px; padding-right: 12px; }
   .topbar { padding-left: 12px; padding-right: 12px; }
+
+  /* 360px com a OpenDyslexic ligada: a barra tem 6 itens e a fonte é larga,
+     então h1, gaps e botões cedem mais um degrau — o texto dos links fica no
+     mesmo tamanho (é o que o leitor precisa) e só o que é decoração aperta. */
+  :root[data-font="dyslexic"] .topbar { gap: 6px; }
+  :root[data-font="dyslexic"] .topbar h1 { font-size: .8rem; }
+  :root[data-font="dyslexic"] .topbar-actions .icon-btn { width: 28px; }
+  :root[data-font="dyslexic"] .topbar-actions .link,
+  :root[data-font="dyslexic"] .topbar-actions .lang-btn { padding-left: 3px; padding-right: 3px; }
   .search, .pill-row, .status-tabs { margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px; }
   .search > svg { left: 25px; }
   .search-clear { right: 20px; }
@@ -1840,3 +2053,37 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
 }
 
 .empty-cta { text-align: center; margin: -34px 0 24px; }
+
+/* ================================================================ paleta Vidro
+   Card das vagas transparente: some o preenchimento e permanece só a sombra
+   dura, em tinta escura. O prefs.js garante que data-palette="vidro" só
+   exista no tema claro. Estas regras vencem as de status (especificidade
+   0,3,0) e vencem os :hover/:active por virem depois no arquivo. */
+:root[data-palette="vidro"] .job-item {
+  --surf: var(--bg);
+  background: transparent;
+  box-shadow: var(--hard);
+}
+
+:root[data-palette="vidro"] .job-item:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+:root[data-palette="vidro"] .job-item:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* no modo deslizar o cartão de trás vazaria o conteúdo pelo card da frente
+   (agora sem preenchimento): ele some, e sobra um card limpo com sombra. */
+:root[data-palette="vidro"] .swipe-card {
+  --surf: var(--bg);
+  background: transparent;
+}
+
+:root[data-palette="vidro"] .swipe-card-behind { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-palette="vidro"] .job-item:hover { transform: none; }
+}

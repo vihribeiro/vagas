@@ -12,6 +12,7 @@
   <link rel="apple-touch-icon" href="/static/icon-192.png">
   <script src="/static/i18n.js?v={{ asset_version }}"></script>
   <script src="/static/theme.js?v={{ asset_version }}"></script>
+  <script src="/static/prefs.js?v={{ asset_version }}"></script>
 </head>
 <body>
   <header class="topbar">
@@ -20,6 +21,8 @@
       <a href="/curriculo" class="link" data-i18n="common_curriculo">Currículo</a>
       <button type="button" class="lang-btn" data-lang-toggle aria-label="English">EN</button>
       <button type="button" class="icon-btn" data-theme-toggle></button>
+      <button type="button" class="icon-btn font-btn" data-font-toggle aria-pressed="false">Aa</button>
+      <div class="palette-wrap" data-palette-host></div>
       <a href="/logout" class="link" data-i18n="common_sair">Sair</a>
     </div>
   </header>

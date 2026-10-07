@@ -85,7 +85,7 @@ def reco_for(score: float | None) -> str:
 # mudarem: sem isso o Cache Storage do service worker pode entregar a versão
 # anterior do arquivo mesmo após o deploy. O mesmo valor aparece no SHELL do
 # app/static/sw.js — os dois precisam andar juntos.
-ASSET_VERSION = "26"
+ASSET_VERSION = "27"
 
 
 def now_iso() -> str:

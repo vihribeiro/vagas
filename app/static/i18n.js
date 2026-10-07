@@ -166,6 +166,14 @@
       // tema
       theme_light: "Ativar tema claro",
       theme_dark: "Ativar tema escuro",
+
+      // acessibilidade (fonte e paleta)
+      font_dyslexic_on: "Ativar fonte para dislexia",
+      font_dyslexic_off: "Desativar fonte para dislexia",
+      palette_aria: "Esquema de cores",
+      palette_label_creme: "Creme",
+      palette_label_gelo: "Gelo",
+      palette_label_vidro: "Vidro",
     },
 
     en: {
@@ -316,6 +324,13 @@
 
       theme_light: "Switch to light theme",
       theme_dark: "Switch to dark theme",
+
+      font_dyslexic_on: "Enable dyslexia font",
+      font_dyslexic_off: "Disable dyslexia font",
+      palette_aria: "Color scheme",
+      palette_label_creme: "Cream",
+      palette_label_gelo: "Ice",
+      palette_label_vidro: "Glass",
     },
   };
 
