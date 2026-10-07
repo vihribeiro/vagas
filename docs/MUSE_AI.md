@@ -231,8 +231,15 @@ Headers: X-API-Key: <VAGAS_API_KEY>
       "score": 4.6,
       "recommendation": "yes",
       "reasons": [
-        "Match alto: Angular + TypeScript são o núcleo do perfil",
-        "100% remoto, dentro da disponibilidade cadastrada"
+        "+1,0 — match alto: Angular + TypeScript são o núcleo do perfil",
+        "+0,9 — 100% remoto, dentro da disponibilidade cadastrada",
+        "+0,8 — empresa bem avaliada no Glassdoor (4,5)",
+        "+0,7 — vaga júnior sem exigência de experiência",
+        "+0,6 — flexibilidade: híbrido leve, 2 dias no escritório",
+        "+0,5 — stack secundária (React) também está no perfil",
+        "+0,5 — visibilidade: vaga recém-aberta, concorrência menor",
+        "-0,2 — avaliação Glassdoor traz queixas de gestão",
+        "-0,2 — benefícios abaixo da média do mercado júnior"
       ],
       "tips": [
         "Na carta, destaque o design system que você manteve",
@@ -251,7 +258,7 @@ Headers: X-API-Key: <VAGAS_API_KEY>
 | `id` **ou** `dedup_key` | identifica a vaga (um dos dois; `id` ganha). Use o `dedup_key` se não quiser guardar ids do app |
 | `score` | número **0–5** (inteiro ou decimal). O app ordena a lista e o baralho por ele |
 | `recommendation` | `yes` (vale aplicar) · `maybe` (talvez) · `no` (deixa passar) — ou vazio |
-| `reasons` | lista de strings, até 20 — **aparece como "Motivos"** no card e no detalhe |
+| `reasons` | lista de strings, até 20 — **aparece como "Motivos"** no card e no detalhe. Cada item com o sinal e os pontos que contribuíram: **+N,N somou, -N,N descontou** (passos de 0,1). Os descontos explicam "por que não 5,0"; idealmente a soma dos fatores fecha a nota |
 | `tips` | lista de strings, até 20 — **aparece como "Dicas do agente"** no app: o que citar na carta, o que pedir no primeiro contato, se vale ou não aplicar e por quê |
 | `scored_by` | quem avaliou, até 60 caracteres — aparece no detalhe ("por muse-ai-v2") |
 

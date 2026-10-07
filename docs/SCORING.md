@@ -89,7 +89,17 @@ POST /api/v1/jobs:score
       "id": 12,
       "score": 4.1,
       "recommendation": "yes",
-      "reasons": ["Match alto de Angular + TypeScript", "100% remoto"],
+      "reasons": [
+        "+1,0 — match alto de Angular + TypeScript",
+        "+0,9 — 100% remoto, dentro da disponibilidade cadastrada",
+        "+0,8 — empresa bem avaliada no Glassdoor (4,5)",
+        "+0,7 — trilha de crescimento clara no anúncio",
+        "+0,6 — salário dentro da faixa esperada",
+        "+0,5 — stack secundária (React) também está no perfil",
+        "+0,3 — benefícios competitivos para o nível",
+        "-0,4 — avaliação Glassdoor 3,2 com queixas de gestão",
+        "-0,3 — anúncio repostado há semanas (concorrência alta)"
+      ],
       "tips": ["Na carta, destaque o projeto Seller Hub"],
       "scored_by": "muse-ai-v2"
     }
@@ -104,7 +114,7 @@ Regras:
 | `id` **ou** `dedup_key` | identifica a vaga (um dos dois; `id` ganha) |
 | `score` | número 0–5, ou `null` |
 | `recommendation` | `yes` \| `maybe` \| `no` (ou vazio) |
-| `reasons` | lista de strings, até 20, ~300 caracteres cada |
+| `reasons` | lista de strings, até 20, ~300 caracteres cada — cada item com o sinal e os pontos que contribuíram: **+N,N somou, -N,N descontou** (passos de 0,1); os descontos explicam "por que não 5,0". Idealmente a soma fecha a nota |
 | `tips` | lista de strings, até 20 — **é o campo das dicas do app** |
 | `scored_by` | quem avaliou, até 60 chars (aparece no detalhe: "por muse-ai-v2") |
 
@@ -137,7 +147,7 @@ o mesmo endpoint — o script `scripts/score_agent.py` é o exemplo funcional.
    lista e o modo deslizar por ela.
 2. `recommendation` — tradução direta: `yes` = vale aplicar, `maybe` = talvez,
    `no` = deixa passar.
-3. `reasons` — por que essa nota (aparece no card e no detalhe).
+3. `reasons` — por que essa nota (aparece no card e no detalhe). Cada motivo marcado com o sinal: **+N,N somou ponto, -N,N descontou** — os descontos respondem a pergunta "por que não 5,0".
 4. `tips` — o que fazer nessa vaga: o que citar na carta, o que pedir no
    primeiro contato, se vale ou não aplicar e por quê. **Aparece no app como
    "Dicas do agente"** — é o campo que o usuário pediu para ter dentro do app.
