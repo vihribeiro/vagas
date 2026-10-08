@@ -831,17 +831,14 @@ a { color: var(--accent); }
   .job-del:focus-visible { opacity: 1; }
 }
 
-/* --tone é o pastel cheio; --surf é o que aparece. Para quem já tem decisão
-   tomada, --surf é o pastel lavado em direção ao fundo e a sombra some —
-   sobra cor de verdade só para o que ainda exige ação. */
+/* --tone é o pastel cheio; --surf é o que aparece. Quem já tem decisão
+   tomada exibe o pastel lavado em direção ao fundo — mas a sombra dura é
+   de todos os cards, em qualquer filtro (era só dos pendentes e confundia
+   ao trocar de aba). */
 .job-item[data-status="pending"] { --tone: var(--c-pending); --surf: var(--c-pending); }
 .job-item[data-status="applied"] { --tone: var(--c-applied); --surf: var(--c-applied-dim); }
 .job-item[data-status="rejected"] { --tone: var(--c-rejected); --surf: var(--c-rejected-dim); }
 .job-item[data-status="dismissed"] { --tone: var(--c-dismissed); --surf: var(--c-dismissed-dim); }
-
-.job-item[data-status="applied"],
-.job-item[data-status="rejected"],
-.job-item[data-status="dismissed"] { box-shadow: none; }
 
 /* as misturas de texto são sempre em direção à própria superfície, nunca
    com alfa: assim o resultado é opaco e o contraste é previsível. */
@@ -939,9 +936,6 @@ a { color: var(--accent); }
 
 @media (hover: hover) {
   .job-item:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
-  .job-item[data-status="applied"]:hover,
-  .job-item[data-status="rejected"]:hover,
-  .job-item[data-status="dismissed"]:hover { transform: none; box-shadow: none; }
 }
 
 .job-item:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
