@@ -85,7 +85,7 @@ def reco_for(score: float | None) -> str:
 # mudarem: sem isso o Cache Storage do service worker pode entregar a versão
 # anterior do arquivo mesmo após o deploy. O mesmo valor aparece no SHELL do
 # app/static/sw.js — os dois precisam andar juntos.
-ASSET_VERSION = "29"
+ASSET_VERSION = "30"
 
 
 def now_iso() -> str:
@@ -540,7 +540,69 @@ def api_list_jobs(request: Request, source: str = "", status: str = "", q: str =
             """,
             {"source": source, "status": status, "q": q.strip(), "like": like},
         ).fetchall()
-    return {"jobs": [job_to_dict(r) for r in rows]}
+
+        # Os números dos filtros não podem sair da lista filtrada: cada
+        # dimensão é contada ignorando o próprio filtro e respeitando os
+        # outros (a busca e a dimensão vizinha). Assim, aberto em
+        # "Dispensadas", os outros status seguem com a contagem real.
+        status_counts = {
+            r["st"]: r["n"]
+            for r in conn.execute(
+                """
+                SELECT COALESCE(s.status, 'pending') AS st, COUNT(*) AS n
+                FROM jobs j
+                LEFT JOIN job_status s ON s.job_id = j.id
+                WHERE (:source = '' OR j.source = :source)
+                  AND (:q = ''
+                       OR j.title LIKE :like
+                       OR j.company LIKE :like
+                       OR j.location LIKE :like)
+                GROUP BY st
+                """,
+                {"source": source, "q": q.strip(), "like": like},
+            ).fetchall()
+        }
+        # Lista completa de origens sob a busca: as pílulas nunca somem do
+        # menu — origem sem vaga no status atual aparece com 0 (é o que o
+        # clique entregaria), não some.
+        all_sources = [
+            r["src"]
+            for r in conn.execute(
+                """
+                SELECT DISTINCT j.source AS src
+                FROM jobs j
+                WHERE j.source <> ''
+                  AND (:q = ''
+                       OR j.title LIKE :like
+                       OR j.company LIKE :like
+                       OR j.location LIKE :like)
+                ORDER BY j.source
+                """,
+                {"q": q.strip(), "like": like},
+            ).fetchall()
+        ]
+        facet_sources = {
+            r["src"]: r["n"]
+            for r in conn.execute(
+                """
+                SELECT j.source AS src, COUNT(*) AS n
+                FROM jobs j
+                LEFT JOIN job_status s ON s.job_id = j.id
+                WHERE (:status = '' OR COALESCE(s.status, 'pending') = :status)
+                  AND (:q = ''
+                       OR j.title LIKE :like
+                       OR j.company LIKE :like
+                       OR j.location LIKE :like)
+                GROUP BY j.source
+                """,
+                {"status": status, "q": q.strip(), "like": like},
+            ).fetchall()
+        }
+        source_counts = {s: facet_sources.get(s, 0) for s in all_sources}
+    return {
+        "jobs": [job_to_dict(r) for r in rows],
+        "counts": {"status": status_counts, "source": source_counts},
+    }
 
 
 @app.post("/api/v1/jobs:bulk")
@@ -744,6 +806,53 @@ async def api_score_jobs(
             )
             applied += 1
     return {"ok": True, "applied": applied, "skipped": skipped, "cv_version": get_cv_version(conn)}
+
+
+@app.post("/api/v1/jobs:purge")
+async def api_purge_jobs(
+    request: Request, x_api_key: str = Header(default="", alias="X-API-Key")
+):
+    """Apaga as vagas avaliadas abaixo do limiar (padrão: 3.0).
+
+    O agente ranqueador chama logo depois de gravar um lote em `jobs:score`
+    para que o painel nunca receba vaga "fora" (score < limiar): a cascata
+    leva `job_status` e `job_evals` junto. Só mexe em vaga que já tem
+    avaliação — nota NULL nunca apaga nada. Limiar vai no corpo:
+
+        {"score_max": 3.0}    # 0–5; corpo vazio usa 3.0
+    """
+    require_api_key(request)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="corpo JSON inválido")
+    score_max = body.get("score_max", 3.0)
+    if (
+        isinstance(score_max, bool)
+        or not isinstance(score_max, (int, float))
+        or not (0 <= score_max <= 5)
+    ):
+        raise HTTPException(
+            status_code=400, detail="score_max precisa ser um número entre 0 e 5"
+        )
+    score_max = float(score_max)
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT j.id
+            FROM jobs j
+            JOIN job_evals e ON e.job_id = j.id
+            WHERE e.score IS NOT NULL AND e.score < :score_max
+            ORDER BY j.id
+            """,
+            {"score_max": score_max},
+        ).fetchall()
+        ids = [r["id"] for r in rows]
+        if ids:
+            conn.executemany("DELETE FROM jobs WHERE id = ?", [(i,) for i in ids])
+    return {"ok": True, "deleted": len(ids), "ids": ids, "score_max": score_max}
 
 
 # ---------------------------------------------------------------- API currículo

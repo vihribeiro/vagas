@@ -1,7 +1,7 @@
 /* Service worker — online-first para dados, cache para o app shell.
-   O ?v=29 abaixo precisa acompanhar o ASSET_VERSION do app/main.py. */
-const CACHE = "vagas-shell-v29";
-const V = "?v=29";
+   O ?v=30 abaixo precisa acompanhar o ASSET_VERSION do app/main.py. */
+const CACHE = "vagas-shell-v30";
+const V = "?v=30";
 const SHELL = [
   "/",
   "/login",

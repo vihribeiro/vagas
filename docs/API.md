@@ -17,6 +17,7 @@ parte do app — entra pelo contrato descrito em
 | `POST` | `/api/v1/jobs:bulk` | `X-API-Key` | Ingerir vagas (quem descobre) |
 | `GET` | `/api/v1/jobs:for-scoring` | `X-API-Key` | Ranqueador: puxar CV + vagas a avaliar |
 | `POST` | `/api/v1/jobs:score` | `X-API-Key` | Ranqueador: gravar avaliações |
+| `POST` | `/api/v1/jobs:purge` | `X-API-Key` | Ranqueador: apagar vagas com nota abaixo do limiar |
 | `GET` | `/api/v1/cv` | sessão **ou** `X-API-Key` | Ler currículo estruturado |
 | `PUT` | `/api/v1/cv` | sessão **ou** `X-API-Key` | Gravar currículo (browser ou agente) |
 | `POST` | `/api/v1/cv:import` | sessão | PDF → módulos (não salva) |
@@ -24,9 +25,9 @@ parte do app — entra pelo contrato descrito em
 | `PATCH` | `/api/v1/jobs/{id}/status` | sessão | Marcar status/anotação |
 | `DELETE` | `/api/v1/jobs/{id}` | sessão | Excluir a vaga (e a avaliação dela) |
 
-Sobre o `:` no caminho: é literal. `jobs:bulk`, `jobs:for-scoring` e
-`jobs:score` não têm `/` — service worker ou proxy que normalize `:` para `/`
-quebra a chamada.
+Sobre o `:` no caminho: é literal. `jobs:bulk`, `jobs:for-scoring`,
+`jobs:score` e `jobs:purge` não têm `/` — service worker ou proxy que
+normalize `:` para `/` quebra a chamada.
 
 ### Autenticação
 
@@ -198,6 +199,25 @@ Item inválido vira `skipped`, não derruba o lote.
 
 ---
 
+## Apagar vagas abaixo do limiar (o ranqueador)
+
+```
+POST /api/v1/jobs:purge
+```
+
+```json
+{ "score_max": 3.0 }
+```
+
+Chamada opcional logo **depois** do `jobs:score`: apaga toda vaga cuja
+avaliação ficou **abaixo** de `score_max` (padrão `3.0`, aceita 0–5). Assim
+o painel nunca recebe vaga "fora" — a cascata leva `job_status` e
+`job_evals` junto. Vaga **sem** avaliação (score `NULL`) nunca é mexida.
+
+Resposta: `{ "ok": true, "deleted": 2, "ids": [7, 11], "score_max": 3.0 }`.
+
+---
+
 ## Currículo (dois caminhos, os mesmos módulos)
 
 O currículo vive em `cv_modules`, uma linha por módulo. Quem escreve:
@@ -246,6 +266,25 @@ Filtros de `GET /api/v1/jobs`:
 | `source` | igualdade exata; vazio = todas |
 | `status` | `pending` \| `applied` \| `rejected` \| `dismissed`; vazio = todas |
 | `q` | busca em `title`, `company` e `location` |
+
+A resposta traz `counts` ao lado de `jobs` — os números dos filtros do
+painel, calculados **sem** o filtro da própria dimensão (cada aba ignora o
+`status` dela, cada pílula ignora a `source` dela) e respeitando os outros:
+
+```json
+{
+  "jobs": [ ... ],
+  "counts": {
+    "status":  { "pending": 4, "applied": 2, "rejected": 1, "dismissed": 3 },
+    "source":  { "bebee": 3, "linkedin": 4, "other": 3 }
+  }
+}
+```
+
+É o que garante que abrir "Dispensadas" não zere as outras abas: o número
+de cada filtro é sempre o resultado que o clique dele entregaria. Origem sem
+vaga no status atual vem com `0` (a lista de origens é completa, para a
+pílula não sumir do menu).
 
 **Ordem = ranking:** score do ranqueador decrescente primeiro, vaga sem
 avaliação para o fim, desempate pela mais recente.

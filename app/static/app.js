@@ -14,7 +14,8 @@ const viewToggleEl = $("view-toggle");
 const swipeSectionEl = $("swipe");
 
 let debounce = null;
-const state = { q: "", source: "", status: "" };
+// status começa em "pending": é o filtro padrão (as abas já nascem nele)
+const state = { q: "", source: "", status: "pending" };
 const knownSources = new Set();
 
 function esc(s) {
@@ -106,12 +107,14 @@ listEl.addEventListener("click", (e) => {
 });
 
 /* ---------------------------------------------------------------- abas de status */
+// Pendentes é o padrão e a última posição é "Todas" — a leitura é
+// "o que está por decidir" primeiro, o agregado no fim.
 const TABS = [
-  { value: "", key: "tab_all" },
   { value: "pending", key: "tab_pending" },
   { value: "applied", key: "tab_applied" },
   { value: "rejected", key: "tab_rejected" },
   { value: "dismissed", key: "tab_dismissed" },
+  { value: "", key: "tab_all" },
 ];
 
 function renderTabs(counts, total) {
@@ -213,7 +216,7 @@ async function fetchJobs() {
     const res = await fetch("/api/v1/jobs?" + params.toString());
     if (res.status === 401) { location.href = "/login"; return; }
     const data = await res.json();
-    render(data.jobs || []);
+    render(data.jobs || [], data.counts || null);
   } catch (err) {
     listEl.innerHTML =
       `<p class="empty"><strong>${I18N.t("app_offline_title")}</strong>${I18N.t("app_offline_body")}</p>`;
@@ -222,18 +225,29 @@ async function fetchJobs() {
   }
 }
 
-function render(jobs) {
-  const byStatus = { pending: 0, applied: 0, rejected: 0, dismissed: 0 };
-  const bySource = {};
-  jobs.forEach((j) => {
-    if (byStatus[j.status] !== undefined) byStatus[j.status]++;
-    const s = j.source || "";
-    if (s) bySource[s] = (bySource[s] || 0) + 1;
-  });
+function render(jobs, counts) {
+  /* Os números dos filtros vêm do servidor já calculados sobre o conjunto
+     inteiro (cada dimensão ignora o próprio filtro) — contar aqui, em cima
+     da lista filtrada, zerava todo o resto: aberto em "Dispensadas", os
+     outros status apareciam todos com 0. O fallback cobre uma resposta
+     antiga (cache de service worker) sem inventar número. */
+  const byStatus = (counts && counts.status) ||
+    { pending: 0, applied: 0, rejected: 0, dismissed: 0 };
+  const bySource = (counts && counts.source) || {};
+  if (!counts) {
+    jobs.forEach((j) => {
+      if (byStatus[j.status] !== undefined) byStatus[j.status]++;
+      const s = j.source || "";
+      if (s) bySource[s] = (bySource[s] || 0) + 1;
+    });
+  }
+  const total = Object.values(byStatus).reduce((a, n) => a + n, 0);
 
-  renderTabs(byStatus, jobs.length);
+  renderTabs(byStatus, total);
 
-  // as origens nunca somem do menu ao trocar o filtro de status
+  // as origens nunca somem do menu ao trocar o filtro de status:
+  // o servidor manda a lista completa e as chaves entram no conjunto
+  Object.keys(bySource).forEach((s) => { if (s) knownSources.add(s); });
   if (!state.source) jobs.forEach((j) => { if (j.source) knownSources.add(j.source); });
   else knownSources.add(state.source);
   renderSources(bySource);

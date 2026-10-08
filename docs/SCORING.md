@@ -34,7 +34,8 @@ o fluxo do navegador continua sendo o principal.
 
 ## Como o ranqueador participa
 
-Somente duas chamadas, com a mesma `X-API-Key` da ingestão:
+Somente duas chamadas, com a mesma `X-API-Key` da ingestão — mais uma
+terceira, opcional, para quem quiser barrar nota baixa (ver §3 no fim):
 
 ### 1. Puxar o que avaliar (GET, pull)
 
@@ -124,6 +125,25 @@ avaliação da vaga — ela volta para o `for-scoring`.
 Resposta: `{ "ok": true, "applied": 3, "skipped": 1, "cv_version": 3 }`. Item
 inválido (vaga inexistente, score fora de 0–5, recommendation desconhecida) é
 `skipped`, não derruba o lote.
+
+### 3. Limpar o que ficou abaixo do limiar (opcional, POST)
+
+```
+POST /api/v1/jobs:purge
+```
+
+```json
+{ "score_max": 3.0 }
+```
+
+Logo depois de gravar o lote, apaga as vagas cuja avaliação ficou **abaixo**
+de `score_max` (padrão `3.0`) — cascata leva `job_status` e `job_evals`.
+Vaga sem avaliação nunca é mexida. Resposta:
+`{ "ok": true, "deleted": 2, "ids": [7, 11], "score_max": 3.0 }`.
+
+É o passo que mantém o painel livre de vaga "fora": quem decide o corte é o
+ranqueador (ou o agendamento dele), não o app. Não quiser cortar, é só não
+chamar.
 
 ## O que o ranqueador recebe para decidir (pergunta "o que passo para o muse.ai")
 

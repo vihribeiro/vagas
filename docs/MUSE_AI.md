@@ -17,6 +17,7 @@ app e a estrutura exata dos JSON que ele envia de volta.
 | **App** | guarda vagas, currículo e avaliações; ordena por score | API abaixo |
 | **muse.ai** | (1) **descobre** vagas nos e-mails (já faz hoje) e **envia** pro app | `POST /api/v1/jobs:bulk` |
 | **muse.ai** | (2) **avalia** cada vaga contra o currículo e **devolve** nota, motivos e dicas | `GET /api/v1/jobs:for-scoring` + `POST /api/v1/jobs:score` |
+| **muse.ai** | (3) **limpa** o que ficou abaixo do limiar (ex.: nota < 3.0) depois de avaliar | `POST /api/v1/jobs:purge` |
 | **Usuário** | navega a lista / desliza / lê as dicas no painel | UI |
 
 O app **nunca calcula match**. Ele entrega o que falta avaliar e recebe o
@@ -34,6 +35,7 @@ Na configuração do muse.ai, cadastre:
 | **Cabeçalho de autenticação** | `X-API-Key: <VAGAS_API_KEY>` (mesmo valor do `.env` do app) |
 | **Content-Type** | `application/json` |
 | **`scored_by`** | o rótulo que o muse.ai usa em cada avaliação (ex.: `muse-ai-v2`). Ele aparece no app como "por muse-ai-v2" |
+| **Limiar de corte** | `score_max: 3.0` — depois de avaliar, o muse.ai chama o purge e **apaga** as vagas com nota abaixo disso (ver §5.3) |
 | **Agendamento** | rodar o ciclo de avaliação **depois de cada varredura** e **depois de cada mudança de currículo** (ver §6) |
 
 O muse.ai **não precisa** de senha nem sessão — só a `X-API-Key`. As rotas de
@@ -66,7 +68,11 @@ produção (bulk, avaliação e currículo) não dependem de login.
    │ manda JSON das   │ ───────────────────────────────► │ grava e       │
    │ avaliações       │  {evals:[...]}                   │ reordena a    │
    └──────────────────┘                                  │ lista/baralho │
-                                                         └───────────────┘
+                                                         └──────┬────────┘
+   ┌──────────────────┐   POST /api/v1/jobs:purge               │
+   │ apaga o que ficou│ ────────────────────────────────────────┘
+   │ abaixo de 3.0    │   {score_max:3.0}   remove vaga + status
+   └──────────────────┘                     + avaliação (cascata)
 ```
 
 A fase de avaliação só produz resultado quando existem **vagas** e **currículo**.
@@ -282,6 +288,38 @@ reasons/tips) **apaga** a avaliação — a vaga volta para o próximo `for-scor
 Item inválido (vaga inexistente, score fora de 0–5, recommendation desconhecida)
 conta como `skipped` e não derruba o lote — envie em lotes de até 100.
 
+### 5.3 Apagar as vagas abaixo do limiar (purge)
+
+```
+POST {BASE_URL}/api/v1/jobs:purge
+Headers: X-API-Key: <VAGAS_API_KEY>
+         Content-Type: application/json
+```
+
+```json
+{ "score_max": 3.0 }
+```
+
+Chame **logo depois** de gravar o lote no §5.2 — é o passo que mantém o
+painel livre de vaga "fora":
+
+| Regra | Detalhe |
+|---|---|
+| o que apaga | toda vaga cuja avaliação ficou **abaixo** de `score_max` (estrito: `score < 3.0`) |
+| limiar | `score_max` no corpo, 0–5; **corpo vazio `{}` usa 3.0** |
+| cascata | `job_status` e `job_evals` vão junto — não sobra resíduo |
+| nunca mexe | vaga **sem** avaliação (score `null`) fica intacta |
+| repetir | idempotente: de novo no mesmo lote apaga `0` |
+
+### Resposta
+
+```json
+{ "ok": true, "deleted": 2, "ids": [7, 11], "score_max": 3.0 }
+```
+
+`score_max` fora de 0–5 → `400` com `detail: "score_max precisa ser um
+número entre 0 e 5"`; sem `X-API-Key` → `403`.
+
 ---
 
 ## 6. Ciclo de invalidação (reavaliação)
@@ -293,10 +331,11 @@ Cada `PUT /api/v1/cv` (salvar currículo) bumpa `cv_version`. Consequência:
 - o muse.ai não precisa controlar nada: quando rodar o próximo GET, o app entrega
   de novo o que ficou defasado.
 
-**Regra de ouro do agendamento:** rode o ciclo (for-scoring → calcular → score)
-depois de **cada varredura de e-mails** e depois de **cada alteração de
-currículo**. Não existe push/webhook no app — o modelo é pull, e o custo do loop
-excessivo é só processamento de vagas que já têm score (o GET devolve vazio).
+**Regra de ouro do agendamento:** rode o ciclo (for-scoring → calcular →
+score → **purge**) depois de **cada varredura de e-mails** e depois de
+**cada alteração de currículo**. Não existe push/webhook no app — o modelo é
+pull, e o custo do loop excessivo é só processamento de vagas que já têm
+score (o GET devolve vazio).
 
 ---
 
@@ -372,6 +411,10 @@ curl -s -H "X-API-Key: $K" $B/api/v1/jobs:for-scoring
 # 3. gravar avaliação
 curl -s -X POST $B/api/v1/jobs:score -H "Content-Type: application/json" -H "X-API-Key: $K" \
   -d '{"evals":[{"id":1,"score":3.4,"recommendation":"maybe","reasons":["React entra no leque"],"tips":["Destaque o TypeScript"],"scored_by":"muse-ai-demo"}]}'
+
+# 4. limpar o que ficou abaixo do limiar (opcional; padrão 3.0)
+curl -s -X POST $B/api/v1/jobs:purge -H "Content-Type: application/json" -H "X-API-Key: $K" \
+  -d '{"score_max":3.0}'
 ```
 
 O cliente de exemplo `scripts/score_agent.py` mostra o ciclo completo com
@@ -389,6 +432,7 @@ modelo muse.ai e ele fica pronto.
 | `400 "jobs precisa ser uma lista"` / `"evals precisa ser uma lista"` | o campo raiz tem o tipo errado |
 | `skipped` alto no `/jobs:bulk` | títulos vazios ou vagas já cadastradas (dedup) |
 | `skipped` alto no `/jobs:score` | id/dedup_key inexistente ou score fora de 0–5 |
+| `400 "score_max precisa ser um número entre 0 e 5"` | corpo do `/jobs:purge` com limiar inválido (use 0–5) |
 | `for-scoring` devolve poucos itens | quase tudo já foi avaliado para o `cv_version` atual — normal |
 
 ---
@@ -400,6 +444,7 @@ modelo muse.ai e ele fica pronto.
 | `POST /api/v1/jobs:bulk` | muse.ai envia vagas | X-API-Key |
 | `GET /api/v1/jobs:for-scoring` | muse.ai puxa CV + vagas pendentes | X-API-Key |
 | `POST /api/v1/jobs:score` | muse.ai grava avaliações | X-API-Key |
+| `POST /api/v1/jobs:purge` | muse.ai apaga vagas com nota < limiar (padrão 3.0) | X-API-Key |
 | `GET /api/v1/cv` | ler currículo estruturado | X-API-Key ou sessão |
 | `PUT /api/v1/cv` | escrever currículo estruturado | X-API-Key ou sessão |
 | `GET /api/v1/jobs` | listar vagas (UI/logística) | sessão |

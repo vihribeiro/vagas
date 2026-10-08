@@ -68,22 +68,23 @@
         Deslize para o lado (ou use ← para candidatar, → para dispensar)
       </p>
       <div class="swipe-actions">
-        <button type="button" class="btn swipe-btn swipe-dismiss" id="swipe-dismiss">
+        <!-- ordem igual à dos gestos: candidatar à esquerda (←), dispensar à direita (→) -->
+        <button type="button" class="btn swipe-btn swipe-apply" id="swipe-apply">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18"/>
+            <path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.5"/>
           </svg>
-          <span data-i18n="swipe_dismiss">Dispensar</span>
+          <span data-i18n="swipe_apply">Candidatar</span>
         </button>
         <button type="button" class="icon-btn swipe-undo" id="swipe-undo" aria-label="Desfazer" title="Desfazer" data-i18n-aria="undo_aria" data-i18n-title="undo_aria" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>
           </svg>
         </button>
-        <button type="button" class="btn swipe-btn swipe-apply" id="swipe-apply">
+        <button type="button" class="btn swipe-btn swipe-dismiss" id="swipe-dismiss">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.5"/>
+            <path d="M6 6l12 12M18 6L6 18"/>
           </svg>
-          <span data-i18n="swipe_apply">Candidatar</span>
+          <span data-i18n="swipe_dismiss">Dispensar</span>
         </button>
       </div>
     </section>

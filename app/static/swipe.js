@@ -2,7 +2,9 @@
    com todas as informações no card. Deslizar (ou botões / ← →) decide:
    esquerda = candidatar, direita = dispensar. Desfazer devolve o último card.
 
-   Toda decisão é o PATCH de status que a lista já usa — nada novo no backend.
+   Candidatar NÃO altera status — a vaga continua em Pendentes (o card só sai
+   do baralho desta sessão; marcar como candidatada é decisão à parte). Só
+   dispensar grava status, com o mesmo PATCH de status que a lista usa.
    As funções $, esc e scoreTier vêm do app.js. */
 (function () {
   const deckEl = document.getElementById("swipe-deck");
@@ -144,24 +146,27 @@
     if (!job || busy) return;
     busy = true;
     const dir = choice ? "right" : "left";
-    const status = choice ? "dismissed" : "applied";
+    // dispensar grava dismissed; candidatar não toca no status (fica pending)
+    const status = choice ? "dismissed" : null;
     const card = document.querySelector(".swipe-card-front");
     if (card) {
       card.classList.add("fly-" + dir);
       card.style.pointerEvents = "none";
     }
 
-    const ok = await patchStatus(job.id, status);
-    if (!ok) {
-      // devolve o card: nada de perder a vaga por erro de rede
-      if (card) {
-        card.classList.remove("fly-" + dir);
-        card.style.transform = "";
-        card.style.pointerEvents = "";
+    if (status) {
+      const ok = await patchStatus(job.id, status);
+      if (!ok) {
+        // devolve o card: nada de perder a vaga por erro de rede
+        if (card) {
+          card.classList.remove("fly-" + dir);
+          card.style.transform = "";
+          card.style.pointerEvents = "";
+        }
+        busy = false;
+        toast(I18N.t("swipe_reg_fail"));
+        return;
       }
-      busy = false;
-      toast(I18N.t("swipe_reg_fail"));
-      return;
     }
 
     jobs.shift();
@@ -202,11 +207,17 @@
     if (!last) return;
     busy = true;
     undoBtn.disabled = true;
-    const ok = await patchStatus(last.job.id, "pending");
-    if (!ok) {
-      history.push(last);
-      toast(I18N.t("swipe_undo_fail"));
+    if (last.status) {
+      // dispensar gravou status: devolver é voltar para pendente
+      const ok = await patchStatus(last.job.id, "pending");
+      if (!ok) {
+        history.push(last);
+        toast(I18N.t("swipe_undo_fail"));
+      } else {
+        jobs.unshift(last.job);
+      }
     } else {
+      // candidatar não gravou nada: é só pôr o card de volta no baralho
       jobs.unshift(last.job);
     }
     undoBtn.disabled = false;
