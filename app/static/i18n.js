@@ -42,6 +42,7 @@
       app_offline_body: "Não foi possível carregar as vagas.",
       app_empty_title: "Nada por aqui",
       app_empty_body: "Nenhuma vaga bate com esses filtros.",
+      job_added_on: "Adicionada em",
 
       // abas e estados
       tab_all: "Todas",
@@ -207,6 +208,7 @@
       app_offline_body: "Couldn't load jobs.",
       app_empty_title: "Nothing here",
       app_empty_body: "No jobs match these filters.",
+      job_added_on: "Added",
 
       tab_all: "All",
       tab_pending: "Pending",

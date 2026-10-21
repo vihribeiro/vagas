@@ -35,6 +35,23 @@ function scoreTier(s) {
   return "fora";
 }
 
+function scoreColorAttrs(score) {
+  if (score == null || score === "") return "";
+  const value = Number(score);
+  if (!Number.isFinite(value)) return "";
+  const ratio = Math.max(0, Math.min(5, value)) / 5 * 100;
+  return `data-score-colored style="--score-ratio:${ratio.toFixed(2)}%"`;
+}
+
+function addedDate(iso) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (isNaN(date)) return "";
+  return date.toLocaleDateString(I18N.locale(), {
+    day: "2-digit", month: "2-digit", year: "numeric",
+  });
+}
+
 const TRASH_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>';
@@ -49,25 +66,38 @@ function jobCard(j) {
   /* score do agente ranqueador. Chega estruturado (j.score); o fallback via
      regex cobre um título legado que ainda viesse com `[4.4/5]`. */
   let badge = "";
+  let colorScore = null;
   if (j.score != null && j.score !== "") {
-    badge = `<span class="score" data-tier="${esc(scoreTier(j.score))}">${esc(Number(j.score).toFixed(1))}</span>`;
+    const value = Number(j.score);
+    if (Number.isFinite(value)) {
+      colorScore = value;
+      badge = `<span class="score" data-tier="${esc(scoreTier(value))}">${esc(value.toFixed(1))}</span>`;
+    }
   } else {
     const sm = String(j.title || "").match(/\[(\d\.\d)\/5\]$/);
-    if (sm) badge = `<span class="score" data-tier="${esc(scoreTier(sm[1]))}">${esc(sm[1])}</span>`;
+    if (sm) {
+      colorScore = Number(sm[1]);
+      badge = `<span class="score" data-tier="${esc(scoreTier(colorScore))}">${esc(sm[1])}</span>`;
+    }
   }
   const cleanTitle = String(j.title || "").replace(/\s*\[\d\.\d\/5\]$/, "");
   const reco = j.recommendation
     ? `<span class="reco reco-${esc(j.recommendation)}">${esc(I18N.t("reco_" + j.recommendation) || j.recommendation)}</span>`
     : "";
+  const date = addedDate(j.created_at);
+  const added = date
+    ? `<time class="added-date" datetime="${esc(j.created_at)}">${esc(I18N.t("job_added_on"))} ${esc(date)}</time>`
+    : "";
   return `
   <div class="job-card">
-    <a class="job-item" href="/vagas/${j.id}" data-status="${esc(j.status)}">
+    <a class="job-item" href="/vagas/${j.id}" data-status="${esc(j.status)}" ${scoreColorAttrs(colorScore)}>
       <h3>${esc(cleanTitle)}</h3>
       <p class="meta">${esc(j.company)}${j.location ? " · " + esc(j.location) : ""}</p>
       ${stack}
       <p class="foot">
         ${badge}${reco}
         <span class="src source-${esc(j.source || "other")}">${esc(j.source || I18N.t("source_other"))}</span>
+        ${added}
       </p>
     </a>
     <button type="button" class="job-del" data-job-del="${j.id}"

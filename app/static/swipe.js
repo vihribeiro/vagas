@@ -59,7 +59,7 @@
     const date = fmtDate(j.created_at);
 
     return `
-      <article class="swipe-card" data-id="${j.id}">
+      <article class="swipe-card" data-id="${j.id}" ${scoreColorAttrs(j.score)}>
         <div class="swipe-card-top">
           ${scoreBadge(j)}${recoPill(j)}
           <span class="src source-${esc(j.source || "other")}">${esc(j.source || I18N.t("source_other"))}</span>
@@ -101,8 +101,8 @@
 
     // card de trás (peek) + card da frente com todas as informações
     deckEl.innerHTML =
-      (jobs[1] ? `<div class="swipe-card swipe-card-behind">${cardHTML(jobs[1])}</div>` : "") +
-      `<div class="swipe-card swipe-card-front">${cardHTML(jobs[0])}</div>`;
+      (jobs[1] ? `<div class="swipe-card swipe-card-behind" ${scoreColorAttrs(jobs[1].score)}>${cardHTML(jobs[1])}</div>` : "") +
+      `<div class="swipe-card swipe-card-front" ${scoreColorAttrs(jobs[0].score)}>${cardHTML(jobs[0])}</div>`;
 
     hintEl.hidden = false;
     undoBtn.hidden = history.length === 0;

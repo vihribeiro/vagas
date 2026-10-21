@@ -1,7 +1,7 @@
 /* Vagas App — sistema visual.
    Direção: papel creme, blocos pastel chapados com sombra dura deslocada e
-   títulos em serifada. A cor do bloco carrega o status; o que já tem decisão
-   tomada recua em saturação. Sem emoji. */
+   títulos em serifada. A cor do bloco carrega o score quando há avaliação;
+   sem score, continua carregando o status. Sem emoji. */
 
 /* ---------------------------------------------------------------- fontes
    OpenDyslexic (OFL), carregada do jsDelivr. O navegador só baixa os
@@ -840,6 +840,15 @@ a { color: var(--accent); }
 .job-item[data-status="rejected"] { --tone: var(--c-rejected); --surf: var(--c-rejected-dim); }
 .job-item[data-status="dismissed"] { --tone: var(--c-dismissed); --surf: var(--c-dismissed-dim); }
 
+/* A nota passa do azul de pendente ao vermelho de evitar. O caminho longo
+   pelo matiz cria uma transição azul → verde/amarelo → vermelho. */
+.job-item[data-score-colored] {
+  --score-surface: color-mix(in srgb, var(--c-rejected) calc(100% - var(--score-ratio)), var(--c-pending) var(--score-ratio));
+  --score-surface: color-mix(in hsl longer hue, var(--c-rejected) calc(100% - var(--score-ratio)), var(--c-pending) var(--score-ratio));
+  --tone: var(--score-surface);
+  --surf: var(--score-surface);
+}
+
 /* as misturas de texto são sempre em direção à própria superfície, nunca
    com alfa: assim o resultado é opaco e o contraste é previsível. */
 .job-item h3 {
@@ -876,14 +885,12 @@ a { color: var(--accent); }
   color: var(--on-tone);
   font-size: .82rem;
 }
-.score[data-tier="alta"] { background: var(--c-applied); }
-.score[data-tier="media"] { background: var(--c-pending); }
-.score[data-tier="baixa"] { background: var(--c-bebee); }
+.score[data-tier="alta"] { background: var(--score-surface, var(--c-applied)); }
+.score[data-tier="media"] { background: var(--score-surface, var(--c-pending)); }
+.score[data-tier="baixa"] { background: var(--score-surface, var(--c-bebee)); }
 .score[data-tier="fora"] {
-  background: transparent;
-  color: var(--text-faint);
-  border-color: var(--bg-sunk);
-  box-shadow: none;
+  background: var(--score-surface, transparent);
+  color: var(--on-tone);
 }
 
 .detail-stack {
@@ -910,6 +917,7 @@ a { color: var(--accent); }
 
 .job-item .foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   margin-top: 11px;
@@ -918,6 +926,16 @@ a { color: var(--accent); }
   letter-spacing: .06em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--on-tone) 80%, var(--surf));
+}
+
+.job-item .added-date {
+  margin-left: auto;
+  font-size: .9em;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: right;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .job-item .src::before {
@@ -1936,7 +1954,7 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
   display: flex;
   flex-direction: column;
   padding: 18px 20px 20px;
-  background: var(--c-pending);
+  background: var(--score-surface, var(--c-pending));
   border-radius: var(--radius);
   box-shadow: var(--hard);
   color: var(--on-tone);
@@ -1944,6 +1962,11 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.swipe-card[data-score-colored] {
+  --score-surface: color-mix(in srgb, var(--c-rejected) calc(100% - var(--score-ratio)), var(--c-pending) var(--score-ratio));
+  --score-surface: color-mix(in hsl longer hue, var(--c-rejected) calc(100% - var(--score-ratio)), var(--c-pending) var(--score-ratio));
 }
 
 /* orgulho da ideia: o card é chapado e duro como o resto, não um "papel 3d" */
@@ -1997,7 +2020,7 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
   font-weight: 700;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--on-tone) 82%, var(--c-pending));
+  color: color-mix(in srgb, var(--on-tone) 82%, var(--score-surface, var(--c-pending)));
 }
 
 .swipe-card-top .src::before {
@@ -2006,7 +2029,7 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
   height: 8px;
   border-radius: 50%;
   background: var(--src-color, var(--c-other));
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--on-tone) 35%, var(--c-pending));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--on-tone) 35%, var(--score-surface, var(--c-pending)));
 }
 
 .swipe-title {
@@ -2026,7 +2049,7 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
   font-size: .84rem;
   line-height: 1.45;
   color: var(--on-tone);
-  background: color-mix(in srgb, var(--on-tone) 12%, var(--c-pending));
+  background: color-mix(in srgb, var(--on-tone) 12%, var(--score-surface, var(--c-pending)));
   border-radius: var(--radius-sm);
   padding: 9px 12px;
 }
@@ -2073,7 +2096,7 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--c-pending);
+  background: var(--score-surface, var(--c-pending));
 }
 
 .swipe-list.tips li::before { background: var(--c-applied); }
@@ -2205,4 +2228,15 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
 
 @media (prefers-reduced-motion: reduce) {
   :root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .job-item:hover { transform: none; }
+}
+
+/* As paletas transparentes cedem ao gradiente somente nos cards avaliados. */
+:root[data-palette="vidro"] .job-item[data-score-colored],
+:root[data-palette="vidro"] .swipe-card[data-score-colored] {
+  background: var(--score-surface);
+}
+
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .job-item[data-score-colored],
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .swipe-card[data-score-colored] {
+  background: var(--score-surface);
 }
