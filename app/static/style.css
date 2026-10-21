@@ -1937,13 +1937,21 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
 
 /* ================================================================ modo deslizar */
 
-.swipe { padding-bottom: 18px; }
+.swipe { position: relative; padding-bottom: 18px; }
+
+.swipe-stage {
+  position: relative;
+  display: flow-root;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
 
 .swipe-deck {
   position: relative;
   height: min(540px, calc(100dvh - 300px));
   min-height: 320px;
-  margin: 4px auto 0;
+  margin: 4px auto 48px;
   max-width: 460px;
   width: 100%;
 }
@@ -1980,11 +1988,26 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
 }
 
 .swipe-card-front {
-  z-index: 2;
+  z-index: 4;
   cursor: grab;
   will-change: transform, opacity;
   transition: none;
 }
+
+.swipe-card-stack {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--on-tone) 18%, transparent);
+  background: linear-gradient(155deg,
+    var(--score-surface, var(--c-pending)) 0%,
+    color-mix(in srgb, var(--score-surface, var(--c-pending)) 38%, transparent) 70%,
+    transparent 100%);
+  pointer-events: none;
+}
+
+.stack-layer-1 { z-index: 3; transform: scale(.98) translateY(14px); opacity: .68; }
+.stack-layer-2 { z-index: 2; transform: scale(.95) translateY(28px); opacity: .46; }
+.stack-layer-3 { z-index: 1; transform: scale(.92) translateY(42px); opacity: .28; }
 
 .swipe-card-front:active { cursor: grabbing; }
 
@@ -2116,6 +2139,48 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
 
 .swipe-links .btn { flex: 1 1 150px; }
 
+/* No desktop, o cartão não rola: a avaliação é resumida para manter o título
+   e as ações sempre visíveis. No celular, o card continua com o conteúdo completo. */
+@media (min-width: 700px) {
+  .swipe-deck {
+    height: min(500px, calc(100dvh - 260px));
+    min-height: 300px;
+    margin-bottom: 48px;
+  }
+
+  .swipe-card { overflow: hidden; }
+
+  .swipe-title,
+  .swipe-stack,
+  .swipe-list li {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .swipe-title,
+  .swipe-stack { -webkit-line-clamp: 2; line-clamp: 2; }
+  .swipe-list li { -webkit-line-clamp: 2; line-clamp: 2; }
+
+  .swipe-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .swipe-eval {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .swipe-group { margin-top: 8px; }
+
+  .swipe-list:not(.tips) li:nth-child(n + 3),
+  .swipe-list.tips li:nth-child(n + 2) { display: none; }
+
+  .swipe-links { flex-shrink: 0; }
+}
+
 .swipe-hint {
   text-align: center;
   font-size: .78rem;
@@ -2124,12 +2189,94 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
 }
 
 .swipe-actions {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
   max-width: 460px;
   margin: 0 auto;
+}
+
+.swipe-trash-target {
+  position: absolute;
+  z-index: 5;
+  top: calc(50% - 23px);
+  left: calc(50% + 235px);
+  right: auto;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--text-faint) 42%, transparent);
+  border-radius: 50%;
+  color: var(--text-faint);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  visibility: hidden;
+  opacity: 0;
+  transform: rotate(-14deg) scale(.45);
+  transition: opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1),
+    color .18s ease, background .18s ease, border-color .18s ease,
+    visibility 0s linear .2s;
+  pointer-events: none;
+}
+
+.swipe-trash-target.is-visible {
+  visibility: visible;
+  opacity: .72;
+  transform: rotate(-7deg) scale(.95);
+  transition-delay: 0s;
+}
+
+.swipe-trash-target > svg { width: 23px; height: 23px; }
+
+.swipe-trash-target .trash-lid {
+  transform-origin: 5px 7px;
+  transition: transform .2s ease;
+}
+
+.swipe-trash-target.is-targeted {
+  visibility: visible;
+  color: var(--c-rejected);
+  border-color: var(--c-rejected);
+  background: color-mix(in srgb, var(--c-rejected) 18%, var(--bg));
+  opacity: 1;
+  transform: rotate(0) scale(1.12);
+  transition-delay: 0s;
+}
+
+@media (max-width: 699px) {
+  .swipe-trash-target { left: auto; right: -8px; }
+}
+
+.swipe-trash-target.is-targeted .trash-lid { transform: translate(-1px,-3px) rotate(-28deg); }
+
+.swipe-luck {
+  position: absolute;
+  z-index: 6;
+  top: -58px;
+  left: 50%;
+  padding: 8px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-pill);
+  background: var(--c-applied);
+  color: var(--on-tone);
+  box-shadow: var(--hard-sm);
+  font-size: .9rem;
+  font-weight: 750;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 8px) scale(.85);
+  transition: opacity .2s ease, transform .28s cubic-bezier(.2,.9,.3,1.3);
+  pointer-events: none;
+}
+
+.swipe-luck.is-visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
+
+.swipe-card-front.fly-trash-fallback {
+  transition: transform .36s cubic-bezier(.2,.8,.25,1), opacity .36s ease;
+  transform: translate(var(--trash-x), var(--trash-y)) rotate(58deg) scale(.08);
+  opacity: 0;
 }
 
 .swipe-btn {
@@ -2239,4 +2386,26 @@ textarea.cv-in { line-height: 1.5; resize: vertical; }
 :root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .job-item[data-score-colored],
 :root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .swipe-card[data-score-colored] {
   background: var(--score-surface);
+}
+
+:root[data-palette="vidro"] .swipe-card-stack,
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .swipe-card-stack {
+  background: linear-gradient(155deg,
+    var(--score-surface, var(--c-pending)) 0%,
+    color-mix(in srgb, var(--score-surface, var(--c-pending)) 38%, transparent) 70%,
+    transparent 100%);
+}
+
+:root[data-palette="vidro"] .swipe-card-stack[data-score-colored],
+:root[data-palette="carvao"]:is([data-theme="dark"], :not([data-theme="light"])) .swipe-card-stack[data-score-colored] {
+  background: linear-gradient(155deg,
+    var(--score-surface) 0%,
+    color-mix(in srgb, var(--score-surface) 38%, transparent) 70%,
+    transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-trash-target,
+  .swipe-trash-target .trash-lid,
+  .swipe-luck { transition: none; }
 }

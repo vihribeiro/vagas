@@ -61,14 +61,23 @@
     <!-- Modo deslizar: o baralho de vagas pendentes, uma por vez, com
          deslize (ou botões / setas) para candidatar ou dispensar. -->
     <section id="swipe" class="swipe" aria-live="polite" hidden>
-      <div class="swipe-deck" id="swipe-deck">
-        <p class="empty"><strong data-i18n="loading">Carregando</strong><span data-i18n="loading_wait">Aguarde um instante.</span></p>
+      <div class="swipe-stage">
+        <div class="swipe-deck" id="swipe-deck">
+          <p class="empty"><strong data-i18n="loading">Carregando</strong><span data-i18n="loading_wait">Aguarde um instante.</span></p>
+        </div>
+        <div class="swipe-trash-target" id="swipe-trash-target" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path class="trash-lid" d="M4 7h16M9 7V4h6v3"/>
+            <path d="m6 7 1 13h10l1-13M10 11v5M14 11v5"/>
+          </svg>
+        </div>
       </div>
       <p class="swipe-hint" id="swipe-hint" hidden data-i18n="swipe_hint">
         Deslize para o lado (ou use ← para candidatar, → para dispensar)
       </p>
       <div class="swipe-actions">
         <!-- ordem igual à dos gestos: candidatar à esquerda (←), dispensar à direita (→) -->
+        <div class="swipe-luck" id="swipe-luck" role="status" aria-live="polite" hidden></div>
         <button type="button" class="btn swipe-btn swipe-apply" id="swipe-apply">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.5"/>

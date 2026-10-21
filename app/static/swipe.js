@@ -11,10 +11,14 @@
   const hintEl = document.getElementById("swipe-hint");
   const undoBtn = document.getElementById("swipe-undo");
   const toastEl = document.getElementById("toast");
+  const trashTargetEl = document.getElementById("swipe-trash-target");
+  const luckEl = document.getElementById("swipe-luck");
 
   let jobs = [];
   let history = []; // decisões desfeitas nesta sessão do baralho
   let busy = false;
+  let luckTimer = null;
+  let trashTimer = null;
 
   const THRESHOLD = 88; // px de arrasto que decide o lado
 
@@ -45,6 +49,10 @@
   function scoreBadge(j) {
     if (j.score == null || j.score === "") return "";
     return `<span class="score" data-tier="${esc(scoreTier(j.score))}">${esc(Number(j.score).toFixed(1))}</span>`;
+  }
+
+  function stackCardHTML(job, depth) {
+    return `<div class="swipe-card swipe-card-stack stack-layer-${depth}" ${scoreColorAttrs(job.score)} aria-hidden="true"></div>`;
   }
 
   function cardHTML(j) {
@@ -99,9 +107,11 @@
       return;
     }
 
-    // card de trás (peek) + card da frente com todas as informações
-    deckEl.innerHTML =
-      (jobs[1] ? `<div class="swipe-card swipe-card-behind" ${scoreColorAttrs(jobs[1].score)}>${cardHTML(jobs[1])}</div>` : "") +
+    // Três próximas vagas formam a pilha; a primeira continua na frente.
+    const stack = jobs.slice(1, 4).map((job, index) =>
+      stackCardHTML(job, index + 1)
+    ).reverse().join("");
+    deckEl.innerHTML = stack +
       `<div class="swipe-card swipe-card-front" ${scoreColorAttrs(jobs[0].score)}>${cardHTML(jobs[0])}</div>`;
 
     hintEl.hidden = false;
@@ -135,9 +145,86 @@
       drag = null;
       if (dx > THRESHOLD) decide(1);           // direita → dispensar
       else if (dx < -THRESHOLD) decide(0);     // esquerda → candidatar
-      else card.style.transform = "";
+      else {
+        card.style.transform = "";
+        card.style.opacity = "";
+        trashTargetEl.classList.remove("is-targeted");
+      }
     });
-    card.addEventListener("pointercancel", () => { drag = null; });
+    card.addEventListener("pointercancel", () => {
+      drag = null;
+      card.style.transform = "";
+      card.style.opacity = "";
+      trashTargetEl.classList.remove("is-targeted");
+    });
+  }
+
+  function showGoodLuck() {
+    luckEl.textContent = I18N.t("swipe_good_luck");
+    luckEl.hidden = false;
+    requestAnimationFrame(() => luckEl.classList.add("is-visible"));
+    clearTimeout(luckTimer);
+    luckTimer = setTimeout(() => {
+      luckEl.classList.remove("is-visible");
+      setTimeout(() => { luckEl.hidden = true; }, 220);
+    }, 1250);
+  }
+
+  function showTrash() {
+    clearTimeout(trashTimer);
+    trashTargetEl.classList.add("is-visible", "is-targeted");
+  }
+
+  function hideTrash() {
+    trashTargetEl.classList.remove("is-targeted");
+    clearTimeout(trashTimer);
+    trashTimer = setTimeout(() => trashTargetEl.classList.remove("is-visible"), 240);
+  }
+
+  function animateExit(card, dismiss) {
+    const startTransform = getComputedStyle(card).transform;
+    const startOpacity = getComputedStyle(card).opacity;
+    const dragTransform = card.style.transform;
+    card.style.transform = "none";
+    const base = card.getBoundingClientRect();
+    card.style.transform = dragTransform;
+
+    const target = dismiss ? trashTargetEl.getBoundingClientRect() : null;
+    const targetX = dismiss ? target.left + target.width / 2 : -window.innerWidth;
+    const targetY = dismiss ? target.top + target.height / 2 : base.top + base.height / 2 - 56;
+    const dx = targetX - (base.left + base.width / 2);
+    const dy = targetY - (base.top + base.height / 2);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (typeof card.animate !== "function") {
+      card.style.transform = "";
+      card.style.opacity = "";
+      if (dismiss) {
+        card.style.setProperty("--trash-x", `${dx}px`);
+        card.style.setProperty("--trash-y", `${dy}px`);
+      }
+      card.classList.add(dismiss ? "fly-trash-fallback" : "fly-left");
+      return { finished: new Promise((resolve) => setTimeout(resolve, reducedMotion ? 1 : 360)), cancel() {} };
+    }
+
+    const destination = `translate(${dx}px, ${dy}px) rotate(${dismiss ? 58 : -16}deg) scale(.08)`;
+    const frames = dismiss ? [
+      { transform: startTransform, opacity: startOpacity, offset: 0 },
+      { transform: `translate(${-dx * 0.05}px, -12px) rotate(-5deg) scale(1.02)`, opacity: 1, offset: .14 },
+      { transform: `translate(${dx * 0.48}px, ${dy * 0.32}px) rotate(18deg) scale(.78)`, opacity: .96, offset: .46 },
+      { transform: `translate(${dx * 0.88}px, ${dy * 0.84}px) rotate(42deg) scale(.32)`, opacity: .7, offset: .82 },
+      { transform: destination, opacity: 0, offset: 1 },
+    ] : [
+      { transform: startTransform, opacity: startOpacity, offset: 0 },
+      { transform: `translate(${dx * 0.34}px, ${dy * 0.12}px) rotate(-7deg) scale(.98)`, opacity: .95, offset: .28 },
+      { transform: destination, opacity: 0, offset: 1 },
+    ];
+
+    return card.animate(frames, {
+      duration: reducedMotion ? 1 : (dismiss ? 760 : 520),
+      easing: "cubic-bezier(.2,.85,.25,1)",
+      fill: "forwards",
+    });
   }
 
   async function decide(choice) {
@@ -145,28 +232,40 @@
     const job = jobs[0];
     if (!job || busy) return;
     busy = true;
-    const dir = choice ? "right" : "left";
     // dispensar grava dismissed; candidatar não toca no status (fica pending)
     const status = choice ? "dismissed" : null;
     const card = document.querySelector(".swipe-card-front");
+    let animation = null;
+    const statusRequest = status ? patchStatus(job.id, status) : Promise.resolve(true);
     if (card) {
-      card.classList.add("fly-" + dir);
       card.style.pointerEvents = "none";
+      if (choice) {
+        showTrash();
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      } else {
+        showGoodLuck();
+      }
+      animation = animateExit(card, Boolean(choice));
     }
 
-    if (status) {
-      const ok = await patchStatus(job.id, status);
-      if (!ok) {
-        // devolve o card: nada de perder a vaga por erro de rede
-        if (card) {
-          card.classList.remove("fly-" + dir);
-          card.style.transform = "";
-          card.style.pointerEvents = "";
-        }
-        busy = false;
-        toast(I18N.t("swipe_reg_fail"));
-        return;
+    const animationDone = animation ? animation.finished.catch(() => {}) : Promise.resolve();
+    const [ok] = await Promise.all([statusRequest, animationDone]);
+    if (animation && typeof animation.cancel === "function") animation.cancel();
+    if (choice) hideTrash();
+
+    if (!ok) {
+      // devolve o card: nada de perder a vaga por erro de rede
+      if (card) {
+        card.classList.remove("fly-left", "fly-trash-fallback");
+        card.style.transform = "";
+        card.style.opacity = "";
+        card.style.pointerEvents = "";
+        card.style.removeProperty("--trash-x");
+        card.style.removeProperty("--trash-y");
       }
+      busy = false;
+      toast(I18N.t("swipe_reg_fail"));
+      return;
     }
 
     jobs.shift();
